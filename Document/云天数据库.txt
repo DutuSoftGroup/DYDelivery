@@ -1,0 +1,17 @@
+荆门
+Host: 172.26.81.6
+实例:gzb02jm
+User: gzbjm
+Pwd: gzbjm
+
+松滋
+Host: 172.26.186.6
+实例:zx_data
+User: zx_data
+Pwd: zx_data
+
+当阳
+host: 172.26.91.5
+实例:gzb06dy
+user:gzbdyykt
+Pwd:gzbdyykt
