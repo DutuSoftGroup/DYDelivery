@@ -32,7 +32,8 @@ uses
   UFrameQuerySaleDetail, UFrameZTDispatch, UFrameTrucks, UFormTruck,
   UFormRFIDCard, UFormBillNew,UFrameCustomer, UFormCustomer, UFormGetCustom,
   UFormTruckEmpty, UFormReadCard, UFormTransfer, UFrameTransfer,
-  UFrameQueryTransferDetail, UFormGetYTBatch, UFrameYTBatchcode,
+  UFrameQueryTransferDetail, UFrameZTLines,
+  UFormGetYTBatch, UFrameYTBatchcode,
 
   UFramePurchaseOrder, UFormPurchaseOrder, UFormPurchasing,
   UFrameQueryOrderDetail, UFrameOrderCard,  UFrameOrderDetail,

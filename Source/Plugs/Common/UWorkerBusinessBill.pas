@@ -446,7 +446,8 @@ begin
       end else
 
       //if (FieldByName('T_Type').AsString = sFlag_Dai) and //袋装与散装都有
-      if (FieldByName('T_InFact').AsString <> '') then
+      if (FListA.Values['InFact'] <> sFlag_Yes)  And  //如果车辆默认为进厂状态
+         (FieldByName('T_InFact').AsString <> '') then
       begin
         nStr := '车辆[ %s ]在未完成[ %s ]交货单之前禁止开单.';
         nData := Format(nStr, [nTruck, FieldByName('T_Bill').AsString]);
@@ -519,6 +520,22 @@ begin
 
   FListB.Text := PackerDecodeStr(nOut.FData);
   FListC.Text := PackerDecodeStr(FListB[0]);
+
+  if FListC.Values['XCB_IsOnly'] = '1' then
+  begin
+    nStr := 'Select L_ID From %s Where L_Project=''%s''';
+    nStr := Format(nStr, [sTable_Bill, FListC.Values['XCB_CardId']]);
+    with gDBConnManager.WorkerQuery(FDBConn, nStr) do
+    if RecordCount > 0 then
+    begin
+      nStr := '单据[ %s ]已开具交货单[ %s ],禁止重复开单.';
+      nData := Format(nStr, [FListC.Values['XCB_CardId'],
+               FieldByName('L_ID').AsString]);
+      Exit;
+    end;
+  end;   
+  //判断一车一票不允许重复开单
+
   FListC.Values['Seal'] := FListA.Values['Seal'];
   FListC.Values['HYDan'] := FListA.Values['HYDan'];
   FListC.Values['Value'] := FloatToStr(nVal);

@@ -80,7 +80,8 @@ const
 
   cFI_FrameWXAccount    = $0110;                     //微信账户
   cFI_FrameWXSendLog    = $0111;                     //发送日志
-  cFI_FrameYTBatchcode  = $0112;                     //云天批次编号记录
+  cFI_FrameYTBatchcode  = $0112;                     //云天批次编号记录 
+  cFI_FrameZTLines      = $0113;                     //栈台信息
 
   cFI_FormMemo          = $1000;                     //备注窗口
   cFI_FormBackup        = $1001;                     //数据备份
@@ -336,6 +337,7 @@ begin
   AddMenuModuleItem('MAIN_F03', cFI_FrameZhanTaiQuery);
   AddMenuModuleItem('MAIN_F04', cFI_FrameZTDispatch);
   AddMenuModuleItem('MAIN_F05', cFI_FormPurchase, mtForm);
+  AddMenuModuleItem('MAIN_F06', cFI_FrameZTLines);
 
   AddMenuModuleItem('MAIN_G01', cFI_FormLadSan, mtForm);
   AddMenuModuleItem('MAIN_G02', cFI_FrameFangHuiQuery);

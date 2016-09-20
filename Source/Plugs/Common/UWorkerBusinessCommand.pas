@@ -2623,8 +2623,8 @@ begin
         First;
         //init cursor
 
-        if nBills[nIdx].FValue<=0 then Continue;
-        //发货量为0
+        //if nBills[nIdx].FValue<=0 then Continue;
+        //发货量为0,管理员已经确认，无需保留
 
         while not Eof do
         begin
