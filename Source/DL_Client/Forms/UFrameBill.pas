@@ -50,6 +50,7 @@ type
     N3: TMenuItem;
     N6: TMenuItem;
     N7: TMenuItem;
+    N10: TMenuItem;
     procedure EditIDPropertiesButtonClick(Sender: TObject;
       AButtonIndex: Integer);
     procedure BtnDelClick(Sender: TObject);
@@ -64,6 +65,7 @@ type
     procedure PMenu1Popup(Sender: TObject);
     procedure CheckDeleteClick(Sender: TObject);
     procedure N6Click(Sender: TObject);
+    procedure N10Click(Sender: TObject);
   protected
     FStart,FEnd: TDate;
     //时间区间
@@ -350,6 +352,18 @@ begin
     PrintBillFYDReport(nStr, False);
   end;
 end;
+
+procedure TfFrameBill.N10Click(Sender: TObject);
+var nStr: string;
+begin
+  inherited;
+  if (cxView1.DataController.GetSelectedCount > 0) and (not CheckDelete.Checked) then
+  begin
+    nStr := SQLQuery.FieldByName('L_HYDan').AsString;
+    PrintHuaYanReport(nStr, SQLQuery.FieldByName('L_StockName').AsString, False);
+  end;
+end;
+
 initialization
   gControlManager.RegCtrl(TfFrameBill, TfFrameBill.FrameID);
 end.
