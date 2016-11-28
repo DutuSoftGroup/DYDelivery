@@ -139,6 +139,7 @@ const
   cFI_FormPurchase      = $1055;                     //采购验收
   cFI_FormGetPOrderBase = $1056;                     //采购订单
   cFI_FormGetYTBatch    = $1057;                     //获取云天批次
+  cFI_FormOrderDtl      = $1058;                     //采购明细
 
   cFI_FormStockParam    = $1065;                     //品种管理
   cFI_FormStockHuaYan   = $1066;                     //开化验单

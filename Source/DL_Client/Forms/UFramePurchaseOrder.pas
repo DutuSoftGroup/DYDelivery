@@ -196,8 +196,8 @@ begin
     EditName.Text := Trim(EditName.Text);
     if EditName.Text = '' then Exit;
 
-    FWhere := 'O_SaleMan like ''%%%s%%'' Or O_SaleMan like ''%%%s%%''';
-    FWhere := Format(FWhere, [EditName.Text, EditName.Text]);
+    FWhere := 'O_Truck like ''%%%s%%''';
+    FWhere := Format(FWhere, [EditName.Text]);
     InitFormData(FWhere);
   end else
 

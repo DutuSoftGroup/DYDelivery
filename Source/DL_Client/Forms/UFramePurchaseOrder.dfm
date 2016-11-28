@@ -126,7 +126,7 @@ inherited fFramePurchaseOrder: TfFramePurchaseOrder
           ControlOptions.ShowBorder = False
         end
         object dxLayout1Item2: TdxLayoutItem
-          Caption = #19994#21153#21592':'
+          Caption = #36710#29260#21495':'
           Control = EditName
           ControlOptions.ShowBorder = False
         end

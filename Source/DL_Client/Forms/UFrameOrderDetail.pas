@@ -50,6 +50,7 @@ type
     procedure N3Click(Sender: TObject);
     procedure Check1Click(Sender: TObject);
     procedure N4Click(Sender: TObject);
+    procedure BtnEditClick(Sender: TObject);
   private
     { Private declarations }
   protected
@@ -72,7 +73,7 @@ implementation
 {$R *.dfm}
 uses
   IniFiles, ULibFun, UMgrControl, UFormDateFilter, USysPopedom, USysBusiness,
-  UBusinessConst, USysConst, USysDB, UDataModule;
+  UBusinessConst, USysConst, USysDB, UDataModule, UFormBase;
 
 class function TfFrameOrderDetail.FrameID: integer;
 begin
@@ -180,7 +181,7 @@ begin
 end;
 //------------------------------------------------------------------------------
 //Date: 2015/8/13
-//Parm: 
+//Parm:
 //Desc: 查询未完成
 procedure TfFrameOrderDetail.N2Click(Sender: TObject);
 begin
@@ -194,7 +195,7 @@ begin
 end;
 //------------------------------------------------------------------------------
 //Date: 2015/8/13
-//Parm: 
+//Parm:
 //Desc: 删除未完成记录
 procedure TfFrameOrderDetail.N3Click(Sender: TObject);
 var nStr, nSQL, nP, nID, nOrderID,nCardType: string;
@@ -250,19 +251,19 @@ begin
         begin
           nSQL := 'Update $OrderBase Set B_FreezeValue=B_FreezeValue-$FreezeVal  ' +
                   'Where B_ID = (select O_BID From $Order Where O_ID=''$ID'') and '+
-                  'B_Value>0'; 
+                  'B_Value>0';
 
           nSQL := MacroValue(nSQL, [MI('$OrderBase', sTable_OrderBase),
                   MI('$Order', sTable_Order),MI('$ID', nOrderID),
                   MI('$FreezeVal', FloatToStr(nFreeze))]);
           FDM.ExecuteSQL(nSQL);
 
-          nSQL := 'Update $Order Set O_Value=0.00 Where O_ID=''$ID'''; 
+          nSQL := 'Update $Order Set O_Value=0.00 Where O_ID=''$ID''';
           nSQL := MacroValue(nSQL, [MI('$Order', sTable_Order),MI('$ID', nOrderID)]);
           FDM.ExecuteSQL(nSQL);
           //防止二次进厂删除重复冻结量
         end;
-      end;  
+      end;
 
       nStr := 'Insert Into $DB($FL,D_DelMan,D_DelDate) ' +
               'Select $FL,''$User'',$Now From $DL Where D_ID=''$ID''';
@@ -271,7 +272,7 @@ begin
               MI('$Now', sField_SQLServer_Now),
               MI('$DL', sTable_OrderDtl), MI('$ID', nID)]);
       FDM.ExecuteSQL(nStr);
-    
+
       nStr := 'Delete From %s Where D_ID=''%s''';
       nStr := Format(nStr, [sTable_OrderDtl, nID]);
       FDM.ExecuteSQL(nStr);
@@ -302,6 +303,20 @@ begin
   begin
     nStr := SQLQuery.FieldByName('D_ID').AsString;
     PrintOrderReport(nStr, False);
+  end;
+end;
+
+procedure TfFrameOrderDetail.BtnEditClick(Sender: TObject);
+var nP: TFormCommandParam;
+begin
+  inherited;
+  if cxView1.DataController.GetSelectedCount > 0 then
+  begin
+    nP.FCommand := cCmd_EditData;
+    nP.FParamA  := SQLQuery.FieldByName('D_ID').AsString;
+    nP.FParamB  := SQLQuery.FieldByName('D_OID').AsString;
+
+    CreateBaseFormItem(cFI_FormOrderDtl, '', @nP);
   end;
 end;
 
