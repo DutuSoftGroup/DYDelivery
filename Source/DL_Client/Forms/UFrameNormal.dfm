@@ -8,7 +8,7 @@ inherited fFrameNormal: TfFrameNormal
     Width = 602
     Height = 37
     ButtonHeight = 35
-    ButtonWidth = 67
+    ButtonWidth = 79
     EdgeBorders = []
     Flat = True
     Images = FDM.ImageBar
@@ -22,19 +22,19 @@ inherited fFrameNormal: TfFrameNormal
       ImageIndex = 0
     end
     object BtnEdit: TToolButton
-      Left = 67
+      Left = 79
       Top = 0
       Caption = #20462#25913
       ImageIndex = 1
     end
     object BtnDel: TToolButton
-      Left = 134
+      Left = 158
       Top = 0
       Caption = #21024#38500
       ImageIndex = 2
     end
     object S1: TToolButton
-      Left = 201
+      Left = 237
       Top = 0
       Width = 8
       Caption = 'S1'
@@ -42,14 +42,21 @@ inherited fFrameNormal: TfFrameNormal
       Style = tbsSeparator
     end
     object BtnRefresh: TToolButton
-      Left = 209
+      Left = 245
       Top = 0
       Caption = #21047#26032
       ImageIndex = 14
       OnClick = BtnRefreshClick
     end
+    object btnWebMall: TToolButton
+      Left = 324
+      Top = 0
+      Caption = #24320#36890#21830#22478#36134#25143
+      ImageIndex = 11
+      Visible = False
+    end
     object S2: TToolButton
-      Left = 276
+      Left = 403
       Top = 0
       Width = 8
       Caption = 'S2'
@@ -57,28 +64,28 @@ inherited fFrameNormal: TfFrameNormal
       Style = tbsSeparator
     end
     object BtnPrint: TToolButton
-      Left = 284
+      Left = 411
       Top = 0
       Caption = #25171#21360
       ImageIndex = 3
       OnClick = BtnPrintClick
     end
     object BtnPreview: TToolButton
-      Left = 351
+      Left = 490
       Top = 0
       Caption = #25171#21360#39044#35272
       ImageIndex = 4
       OnClick = BtnPreviewClick
     end
     object BtnExport: TToolButton
-      Left = 418
+      Left = 569
       Top = 0
       Caption = #23548#20986
       ImageIndex = 5
       OnClick = BtnExportClick
     end
     object S3: TToolButton
-      Left = 485
+      Left = 648
       Top = 0
       Width = 8
       Caption = 'S3'
@@ -86,7 +93,7 @@ inherited fFrameNormal: TfFrameNormal
       Style = tbsSeparator
     end
     object BtnExit: TToolButton
-      Left = 493
+      Left = 656
       Top = 0
       Caption = '   '#20851#38381'   '
       ImageIndex = 7

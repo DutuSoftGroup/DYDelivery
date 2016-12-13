@@ -41,6 +41,7 @@ type
     cxSplitter1: TcxSplitter;
     TitlePanel1: TZnBitmapPanel;
     TitleBar: TcxLabel;
+    btnWebMall: TToolButton;
     procedure BtnRefreshClick(Sender: TObject);
     procedure BtnExportClick(Sender: TObject);
     procedure BtnPrintClick(Sender: TObject);

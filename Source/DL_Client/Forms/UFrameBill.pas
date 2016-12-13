@@ -14,7 +14,7 @@ uses
   cxGridCustomTableView, cxGridTableView, cxGridDBTableView, cxGrid,
   ComCtrls, ToolWin, cxTextEdit, cxMaskEdit, cxButtonEdit, Menus,
   UBitmapPanel, cxSplitter, cxLookAndFeels, cxLookAndFeelPainters,
-  cxCheckBox;
+  cxCheckBox, dxLayoutcxEditAdapters;
 
 type
   TfFrameBill = class(TfFrameNormal)
@@ -65,6 +65,7 @@ type
     procedure PMenu1Popup(Sender: TObject);
     procedure CheckDeleteClick(Sender: TObject);
     procedure N6Click(Sender: TObject);
+    procedure SendMsgToWebMall(const nBillno:string);
     procedure N10Click(Sender: TObject);
   protected
     FStart,FEnd: TDate;
@@ -87,7 +88,8 @@ implementation
 {$R *.dfm}
 uses
   ULibFun, UMgrControl, UDataModule, UFormBase, UFormInputbox, USysPopedom,
-  USysConst, USysDB, USysBusiness, UFormDateFilter;
+  USysConst, USysDB, USysBusiness, UFormDateFilter,UBusinessConst,UBusinessPacker,
+  USysLoger;
 
 //------------------------------------------------------------------------------
 class function TfFrameBill.FrameID: integer;
@@ -256,6 +258,12 @@ begin
   nStr := Format(nStr, [SQLQuery.FieldByName('L_ID').AsString]);
   if not QueryDlg(nStr, sAsk) then Exit;
 
+  //推送公众号消息
+  SendMsgToWebMall(SQLQuery.FieldByName('L_ID').AsString);
+  nStr := 'update %s set WOM_deleted=''%s'' where WOM_LID=''%s''';
+  nStr := Format(nStr,[sTable_WebOrderMatch,sFlag_Yes,SQLQuery.FieldByName('L_ID').AsString]);
+  fdm.ExecuteSQL(nStr);
+
   if DeleteBill(SQLQuery.FieldByName('L_ID').AsString) then
   begin
     InitFormData(FWhere);
@@ -355,12 +363,100 @@ end;
 
 procedure TfFrameBill.N10Click(Sender: TObject);
 var nStr: string;
+  nOutFact:string;             
 begin
   inherited;
   if (cxView1.DataController.GetSelectedCount > 0) and (not CheckDelete.Checked) then
   begin
     nStr := SQLQuery.FieldByName('L_HYDan').AsString;
-    PrintHuaYanReport(nStr, SQLQuery.FieldByName('L_StockName').AsString, False);
+    nOutFact := FormatDateTime('yyyy年mm月dd日',SQLQuery.FieldByName('L_OutFact').AsDateTime);
+    PrintHuaYanReport(nStr, SQLQuery.FieldByName('L_StockName').AsString,nOutFact, False);
+  end;
+end;
+
+procedure TfFrameBill.SendMsgToWebMall(const nBillno: string);
+var
+  nSql:string;
+  nDs:TDataSet;
+
+  nBills: TLadingBillItems;
+  nXmlStr,nData:string;
+  i:Integer;
+  nItem:TLadingBillItem;
+  nMobileNo,nCustomerid:string;
+begin
+
+  //加载提货单信息
+  if not GetLadingBills(nBillno, sFlag_BillDel, nBills) then
+  begin
+    Exit;
+  end;
+
+  //调用web接口发送消息
+  for i := Low(nBills) to High(nBills) do
+  begin
+    nItem := nBills[i];
+
+    //查询手机号码
+    nSql := 'select i_info from %s where i_group=''%s'' and i_Item=''%s'''
+        +' and i_itemid = (select l_cusid from s_bill where l_id in(%s))';
+    nSql := Format(nSql,[sTable_ExtInfo,sFlag_CustomerItem,'手机',nBillno]);
+
+    if FDM.QuerySQL(nSql).recordcount<=0 then
+    begin
+      Continue;
+    end;
+    nMobileNo := FDM.QuerySQL(nSql).FieldByName('i_info').asstring;
+
+    //由手机号查询微信号绑定的Customerid
+    nSql := 'select wcb_Bindcustomerid from %s where wcb_WebMallStatus=''1'' and wcb_Phone=''%s''';
+    nSql := Format(nSql,[sTable_WeixinBind,nMobileNo]);
+    if FDM.QuerySQL(nSql).recordcount<=0 then
+    begin
+      Continue;
+    end;
+    nCustomerid := FDM.QuerySQL(nSql).FieldByName('wcb_Bindcustomerid').asstring;
+
+    nXmlStr := '<?xml version="1.0" encoding="UTF-8"?>'
+        +'<DATA>'
+        +'<head>'
+        +'<Factory>%s</Factory>'
+        +'<ToUser>%s</ToUser>'
+        +'<MsgType>%d</MsgType>'
+        +'</head>'
+        +'<Items>'
+        +'	  <Item>'
+        +'	      <BillID>%s</BillID>'
+        +'	      <Card>%s</Card>'
+        +'	      <Truck>%s</Truck>'
+        +'	      <StockNo>%s</StockNo>'
+        +'	      <StockName>%s</StockName>'
+        +'	      <CusID>%s</CusID>'
+        +'	      <CusName>%s</CusName>'
+        +'	      <CusAccount></CusAccount>'
+        +'	      <MakeDate></MakeDate>'
+        +'	      <MakeMan></MakeMan>'
+        +'	      <TransID></TransID>'
+        +'	      <TransName></TransName>'
+        +'	      <Searial></Searial>'
+        +'	      <OutFact></OutFact>'
+        +'	      <OutMan></OutMan>'
+        +'	  </Item>	'
+        +'</Items>'
+        +'   <remark/>'
+        +'</DATA>';
+    nXmlStr := Format(nXmlStr,[gSysParam.FFactory, nCustomerid,cSendWeChatMsgType_DelBill,
+          nItem.FID,nItem.FCard,nitem.FTruck,
+          nItem.FStockNo,nItem.FStockName,nItem.FCusID,
+          nItem.FCusName]);
+    nXmlStr := PackerEncodeStr(nXmlStr);
+    nData := send_event_msg(nXmlStr);
+    gSysLoger.AddLog(TfFrameBill,'SendMsgToWebMall',nData);
+
+    if ndata<>'' then
+    begin
+      ShowMsg(nData,sHint);
+    end;
   end;
 end;
 

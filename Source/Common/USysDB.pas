@@ -218,6 +218,7 @@ ResourceString
 
   sFlag_HardSrvURL    = 'HardMonURL';
   sFlag_MITSrvURL     = 'MITServiceURL';             //服务地址
+  sFlag_Factoryid     = 'FactoryId';                 //工厂ID，与微信平台交互数据时使用
 
   sFlag_AutoIn        = 'Truck_AutoIn';              //自动进厂
   sFlag_AutoOut       = 'Truck_AutoOut';             //自动出厂
@@ -286,6 +287,7 @@ ResourceString
   sTable_WeixinLog    = 'Sys_WeixinLog';             //微信日志
   sTable_WeixinMatch  = 'Sys_WeixinMatch';           //账号匹配
   sTable_WeixinTemp   = 'Sys_WeixinTemplate';        //信息模板
+  sTable_WeixinBind   = 'sys_WeixinCusBind';         //微信账号绑定
 
   sTable_ZhiKa        = 'S_ZhiKa';                   //纸卡数据
   sTable_ZhiKaDtl     = 'S_ZhiKaDtl';                //纸卡明细
@@ -324,6 +326,8 @@ ResourceString
   sTable_YT_CardInfo  = 'S_YTCardInfo';              //云天销售卡片
   sTable_YT_CodeInfo  = 'S_YTCodeInfo';              //云天水泥编号
   sTable_YT_Batchcode = 'S_YTBatchcodeInfo';         //云天系统化验记录
+
+  sTable_WebOrderMatch   = 'S_WebOrderMatch';        //商城订单映射
 
 const
   {*新建表*}
@@ -482,7 +486,7 @@ const
    *.T_Memo: 备注
   -----------------------------------------------------------------------------}
 
-  sSQL_NewCustomer = 'Create Table $Table(R_ID $Inc, C_ID varChar(15), ' +
+  sSQL_NewCustomer = 'Create Table $Table(R_ID $Inc, C_ID varChar(20), ' +
        'C_Name varChar(80), C_PY varChar(80), C_Addr varChar(100), ' +
        'C_FaRen varChar(50), C_LiXiRen varChar(50), C_WeiXin varChar(15),' +
        'C_Phone varChar(15), C_Fax varChar(15), C_Tax varChar(32),' +
@@ -509,7 +513,7 @@ const
    *.C_XuNi: 虚拟(临时)客户
   -----------------------------------------------------------------------------}
   
-  sSQL_NewCusAccount = 'Create Table $Table(R_ID $Inc, A_CID varChar(15),' +
+  sSQL_NewCusAccount = 'Create Table $Table(R_ID $Inc, A_CID varChar(20),' +
        'A_Used Char(1), A_InMoney Decimal(15,5) Default 0,' +
        'A_OutMoney Decimal(15,5) Default 0, A_DebtMoney Decimal(15,5) Default 0,' +
        'A_Compensation Decimal(15,5) Default 0,' +
@@ -1195,6 +1199,23 @@ const
    *.W_TComment: 备注
   -----------------------------------------------------------------------------}
 
+  sSQL_NewWeixinCusBind = 'Create Table $Table(R_ID $Inc, wcb_Phone varchar(11),'
+        +'wcb_Appid varchar(20),wcb_Bindcustomerid varchar(32),wcb_Namepinyin varchar(20),'
+        +'wcb_Email varchar(20),wcb_Openid varchar(28),wcb_Binddate varchar(25),'
+        +'wcb_WebMallStatus char(1))';
+  {-----------------------------------------------------------------------------
+  sys_WeixinCusBind微信客户绑定
+  *.R_ID:记录号
+  *.wcb_Phone:电话号码
+  *.wcb_Appid:appid
+  *.wcb_Bindcustomerid:绑定客户id
+  *.wcb_Namepinyin:姓名
+  *.wcb_Email:邮箱
+  *.wcb_Openid:openid
+  *.wcb_Binddate:绑定日期
+  *.wcb_WebMallStatus:是否开通商城用户，默认值0：未开通 1：已开通
+  -----------------------------------------------------------------------------}
+
   sSQL_NewProvider = 'Create Table $Table(R_ID $Inc, P_ID varChar(32),' +
        'P_Name varChar(80),P_PY varChar(80), P_Phone varChar(20),' +
        'P_Saler varChar(32),P_Memo varChar(50))';
@@ -1470,6 +1491,8 @@ const
        'PAW_Temp135 varChar (32), PAW_Temp136 varChar (32), '  +
        'PAW_Temp137 varChar (32), PAW_Temp138 varChar (32), '  +
        'PAW_Temp139 varChar (32), PAW_Temp0 varChar (32)'  +
+       'PAW_Temp141 varChar (32), PAW_Temp143 varChar (32)'  +
+       'PAW_Temp145 varChar (32)'  +
        ')';
   {-----------------------------------------------------------------------------
    水泥化验记录表: YTBatchcode
@@ -1479,6 +1502,14 @@ const
    *.C_Stock: 品种编号
    *.C_Freeze: 冻结量
    *.C_HasDone: 完成量
+  -----------------------------------------------------------------------------}
+
+  sSQL_NewWebOrderMatch = 'Create Table $Table(R_ID $Inc,WOM_WebOrderID varchar(32) null,WOM_LID varchar(20) null,WOM_deleted char(1) default ''N'')';
+  {-----------------------------------------------------------------------------
+   商城订单与提货单对照表: WebOrderMatch
+   *.R_ID: 记录编号
+   *.WOM_WebOrderID: 商城订单
+   *.WOM_LID: 提货单
   -----------------------------------------------------------------------------}
 
 //------------------------------------------------------------------------------
@@ -1614,6 +1645,7 @@ begin
   AddSysTableItem(sTable_WeixinLog, sSQL_NewWXLog);
   AddSysTableItem(sTable_WeixinMatch, sSQL_NewWXMatch);
   AddSysTableItem(sTable_WeixinTemp, sSQL_NewWXTemplate);
+  AddSysTableItem(sTable_WeixinBind,sSQL_NewWeixinCusBind);
 
   AddSysTableItem(sTable_ZhiKa, sSQL_NewZhiKa);
   AddSysTableItem(sTable_ZhiKaDtl, sSQL_NewZhiKaDtl);
@@ -1649,6 +1681,7 @@ begin
   AddSysTableItem(sTable_YT_CardInfo, sSQL_NewYTCard);
   AddSysTableItem(sTable_YT_CodeInfo, sSQL_NewYTCode);
   AddSysTableItem(sTable_YT_Batchcode, sSQL_NewYTBatchcode);
+  AddSysTableItem(sTable_WebOrderMatch,sSQL_NewWebOrderMatch);
 end;
 
 //Desc: 清理系统表

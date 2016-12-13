@@ -46,8 +46,11 @@ type
     procedure N2Click(Sender: TObject);
     procedure PMenu1Popup(Sender: TObject);
     procedure N4Click(Sender: TObject);
+    procedure btnWebMallClick(Sender: TObject);
   private
     { Private declarations }
+    function AddMallUser(const nPhone,nCus_id:string):Boolean;
+    function DelMallUser(const nPhone,nCus_id:string):boolean;
   protected
     function InitFormDataSQL(const nWhere: string): string; override;
     {*查询SQL*}
@@ -61,7 +64,7 @@ implementation
 {$R *.dfm}
 uses
   ULibFun, UMgrControl, UDataModule, UFormBase, UFormWait, USysBusiness,
-  USysConst, USysDB;
+  USysConst, USysDB,UBusinessPacker,USysLoger;
 
 class function TfFrameCustomer.FrameID: integer;
 begin
@@ -71,6 +74,7 @@ end;
 //Desc: 数据查询SQL
 function TfFrameCustomer.InitFormDataSQL(const nWhere: string): string;
 begin
+  btnWebMall.Visible := True;
   Result := 'Select cus.*,S_Name From $Cus cus' +
             ' Left Join $Sale On S_ID=cus.C_SaleMan';
   //xxxxx
@@ -131,7 +135,9 @@ end;
 //Desc: 删除
 procedure TfFrameCustomer.BtnDelClick(Sender: TObject);
 var nStr,nSQL: string;
+  nCusId,nMobileNo:string;
 begin
+  nMobileNo := '';
   if cxView1.DataController.GetSelectedCount < 1 then
   begin
     ShowMsg('请选择要删除的记录', sHint); Exit;
@@ -143,9 +149,18 @@ begin
   FDM.ADOConn.BeginTrans;
   try
     nStr := SQLQuery.FieldByName('C_ID').AsString;
+    nCusId := nStr;
     nSQL := 'Delete From %s Where C_ID=''%s''';
     nSQL := Format(nSQL, [sTable_Customer, nStr]);
     FDM.ExecuteSQL(nSQL);
+
+    //查询附加信息中的手机号码，用于删除商城账号
+    nSql := 'select I_Info from %s where I_Group=''%s'' and I_Item=''%s'' and I_ItemID=''%s''';
+    nSql := Format(nSql,[sTable_ExtInfo,sFlag_CustomerItem,'手机',nCusId]);
+    if FDM.QuerySQL(nSql).RecordCount>0 then
+    begin
+      nMobileNo := FDM.QueryTemp(nSQL).FieldByName('I_Info').AsString;
+    end;
 
     nSQL := 'Delete From %s Where I_Group=''%s'' and I_ItemID=''%s''';
     nSQL := Format(nSQL, [sTable_ExtInfo, sFlag_CustomerItem, nStr]);
@@ -160,6 +175,11 @@ begin
     FDM.ExecuteSQL(nSQL);
 
     FDM.ADOConn.CommitTrans;
+    if nMobileNo<>'' then
+    begin
+      DelMallUser(nMobileNo,nCusId);
+    end;
+
     InitFormData(FWhere);
     ShowMsg('已成功删除记录', sHint);
   except
@@ -237,6 +257,154 @@ begin
   finally
     CloseWaitForm;
   end;   
+end;
+
+//desc:开通网上商城账号
+procedure TfFrameCustomer.btnWebMallClick(Sender: TObject);
+var nParam: TFormCommandParam;
+  nCus_ID,nMobileNo,nCusName:string;
+  nSql:string;
+  nDs:TDataSet;
+  nWebMallStatus:string;
+begin
+  if cxView1.DataController.GetSelectedCount < 1 then
+  begin
+    ShowMsg('请选择要开通的记录', sHint); Exit;
+  end;
+  nCus_ID := SQLQuery.FieldByName('C_ID').AsString;
+  nCusName := SQLQuery.FieldByName('C_Name').AsString;
+  
+  //查询附加信息中的手机号码
+  nSql := 'select I_Info from %s where I_Group=''%s'' and I_Item=''%s'' and I_ItemID=''%s''';
+  nSql := Format(nSql,[sTable_ExtInfo,sFlag_CustomerItem,'手机',nCus_ID]);
+  nDs := FDM.QuerySQL(nSql);
+  if nDs.RecordCount<=0 then
+  begin
+    ShowMsg('该客户未设置手机号码，请在增加附加信息后再试！','手机号码未设置');
+    Exit;
+  end;
+  nMobileNo := FDM.QueryTemp(nSQL).FieldByName('I_Info').AsString;
+  {
+  //暂不判断是否绑定微信号
+  //判断录入的手机号码是否已成功绑定
+  nSql := 'select isnull(wcb_WebMallStatus,''0'') as wcb_WebMallStatus  from %s where wcb_Phone=''%s''';
+  nSql := Format(nSql,[sTable_WeixinBind,nMobileNo]);
+  nDs := FDM.QuerySQL(nSql);
+  if nDs.RecordCount<=0 then
+  begin
+    ShowMsg('客户 [ '+nCusName+' ] 设置的手机号码 [ '+nMobileNo+' ] 未进行绑定 ，请先进行账户绑定！','手机号码未绑定');
+    Exit;
+  end;
+  nWebMallStatus := nDs.FieldByName('wcb_WebMallStatus').AsString;
+  if nWebMallStatus='1' then
+  begin
+    ShowMsg('客户 [ '+nCusName+' ] 设置的手机号码 [ '+nMobileNo+' ] 已开通商城账号，无需重复操作！','已开通');
+    Exit;
+  end;
+  }
+  if AddMallUser(nMobileNo,nCus_ID) then
+  begin
+    //更新sys_WeixinCusBind表的状态
+    nSql := 'update %s set wcb_WebMallStatus=''%s'' where wcb_Phone=''%s''';
+    nSql := Format(nSql,[sTable_WeixinBind,'1',nMobileNo]);
+
+    FDM.ADOConn.BeginTrans;
+    try
+      FDM.ExecuteSQL(nSQL);
+      FDM.ADOConn.CommitTrans;
+      ShowMsg('客户 [ '+nCusName+' ] 开通商城用户成功！',sHint);
+    except
+      FDM.ADOConn.RollbackTrans;
+      ShowMsg('开通商城用户失败', '未知错误');
+    end;
+  end;
+end;
+
+function TfFrameCustomer.AddMallUser(const nPhone,
+  nCus_id: string): Boolean;
+var
+  nXmlStr,nPass:string;
+  nData:string;
+begin
+  Result := False;
+  //默认密码123456
+  nPass := '123456';
+
+  //发送绑定请求开户请求
+  nXmlStr := '<?xml version="1.0" encoding="UTF-8"?>'
+            +'<DATA>'
+            +'<head>'
+            +'<Factory>%s</Factory>'
+            +'<phone>%s</phone>'
+            +'<password>%s</password>'
+            +'  <type>add</type>'
+            +'</head>'
+            +'<Items>'
+            +'	<Item>'
+            +'	  <clientID>null</clientID>'
+            +'	  <cash>0</cash>'
+            +'	  <clientnumber>%s</clientnumber>'
+            +'	</Item>'
+            +'</Items>'
+            +' <remark/>'
+            +'</DATA>';
+  nXmlStr := Format(nXmlStr,[gSysParam.FFactory,nPhone,nPass,nCus_id]);
+  nXmlStr := PackerEncodeStr(nXmlStr);
+  nData := edit_shopclients(nXmlStr);
+  gSysLoger.AddLog(TfFrameCustomer,'AddMallUser',nData);
+  if nData='' then
+  begin
+    ShowMsg('手机号码[ '+nPhone+' ]注册商城用户失败！', sError);
+    Exit;
+  end;
+  Result := True;
+end;
+
+function TfFrameCustomer.DelMallUser(const nPhone,
+  nCus_id: string): boolean;
+var
+  nSql,nXmlStr,nData:string;
+  nDs:TDataSet;
+begin
+  Result := True;
+  //判断是否开通过商城账号
+  nSql := 'select 1 from %s where wcb_WebMallStatus=''1'' and wcb_Phone=''%s''';
+  nSql := Format(nSql,[sTable_WeixinBind,nPhone]);
+  nDs := FDM.QuerySQL(nSql);
+  //已开通商城账号
+  if nDs.RecordCount>0 then
+  begin
+    //发送web请求删除商城账号
+    nXmlStr := '<?xml version="1.0" encoding="UTF-8"?>'
+              +'<DATA>'
+              +'<head>'
+              +'<Factory>%s</Factory>'
+              +'<phone>%s</phone>'
+              +'<password></password>'
+              +'  <type>del</type>'
+              +'</head>'
+              +'<Items>'
+              +'	<Item>'
+              +'	  <clientID>null</clientID>'
+              +'	  <cash>0</cash>'
+              +'	  <clientnumber>%s</clientnumber>'
+              +'	</Item>'
+              +'</Items>'
+              +' <remark/>'
+              +'</DATA>';
+
+    nXmlStr := Format(nXmlStr,[gSysParam.FFactory,nPhone,nCus_id]);
+    nXmlStr := PackerEncodeStr(nXmlStr);
+
+    nData := edit_shopclients(nXmlStr);
+    gSysLoger.AddLog(TfFrameCustomer,'DelMallUser',nData);
+    if nData='' then
+    begin
+      ShowMsg('手机号码[ '+nPhone+' ]删除商城用户失败！', sError);
+      Result := False;
+      Exit;
+    end;
+  end;
 end;
 
 initialization

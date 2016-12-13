@@ -91,7 +91,8 @@ type
   end;
 
 implementation
-
+uses
+  UHardBusiness;
 class function TWorkerBusinessBills.FunctionName: string;
 begin
   Result := sBus_BusinessSaleBill;
@@ -843,6 +844,16 @@ begin
     Result := True;
   except
     FDBConn.FConn.RollbackTrans;
+    raise;
+  end;
+
+  //发送微信消息
+  FDBConn.FConn.BeginTrans;
+  try
+    SendMsgToWebMall(nOut.FData,cSendWeChatMsgType_AddBill);
+    FDBConn.FConn.CommitTrans;
+  except
+     FDBConn.FConn.RollbackTrans;
     raise;
   end;
 
@@ -2491,6 +2502,9 @@ begin
         end;
       end;
     end;
+
+    SendMsgToWebMall(nBills[0].FID,cSendWeChatMsgType_OutFactory);
+    ModifyWebOrderStatus(nBills[0].FID);
 
     for nIdx:=Low(nBills) to High(nBills) do
     with nBills[nIdx] do

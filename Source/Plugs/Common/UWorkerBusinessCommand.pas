@@ -105,6 +105,42 @@ type
     function SyncRemoteCustomer(var nData: string): Boolean;
     function SyncRemoteProviders(var nData: string): Boolean;
     function SyncRemoteMaterails(var nData: string): Boolean;
+
+    function CheckSecurityCodeValid(var nData: string): Boolean;
+    //防伪码校验
+
+    function GetWaitingForloading(var nData: string):Boolean;
+    //工厂待装查询
+
+    function GetBillSurplusTonnage(var nData:string):boolean;
+    //网上订单可下单数量查询
+
+    function GetOrderInfo(var nData:string):Boolean;
+    //获取订单信息，用于网上下单
+
+    function getCustomerInfo(var nData:string):Boolean;
+    //获取客户注册信息
+    
+    function get_Bindfunc(var nData:string):Boolean;
+    //客户与微信账号绑定
+    
+    function send_event_msg(var nData:string):Boolean;
+    //发送消息
+    
+    function edit_shopclients(var nData:string):Boolean;
+    //新增商城用户
+
+    function edit_shopgoods(var nData:string):Boolean;
+    //添加商品
+
+    function get_shoporders(var nData:string):Boolean;
+    //获取订单信息
+
+    function get_shoporderbyno(var nData:string):Boolean;
+    //根据订单号获取订单信息
+
+    function complete_shoporders(var nData:string):Boolean;
+    //修改订单状态
   public
     constructor Create; override;
     destructor destroy; override;
@@ -159,7 +195,9 @@ type
   end;
 
 implementation
-
+uses
+  uFormCallWechatWebService,UMgrQueue,UDataModule;
+  
 class function TBusWorkerQueryField.FunctionName: string;
 begin
   Result := sBus_GetQueryField;
@@ -423,6 +461,20 @@ begin
    cBC_SyncSaleMan         : Result := SyncRemoteSaleMan(nData);
    cBC_SyncProvider        : Result := SyncRemoteProviders(nData);
    cBC_SyncMaterails       : Result := SyncRemoteMaterails(nData);
+
+   cBC_VerifPrintCode      : Result := CheckSecurityCodeValid(nData); //验证码查询
+   cBC_WaitingForloading   : Result := GetWaitingForloading(nData); //待装车辆查询
+   cBC_BillSurplusTonnage  : Result := GetBillSurplusTonnage(nData); //查询商城订单可用量
+   cBC_GetOrderInfo        : Result := GetOrderInfo(nData); //查询云天系统订单信息
+   
+   cBC_WeChat_getCustomerInfo : Result := getCustomerInfo(nData);   //微信平台接口：获取客户注册信息
+   cBC_WeChat_get_Bindfunc    : Result := get_Bindfunc(nData);   //微信平台接口：客户与微信账号绑定
+   cBC_WeChat_send_event_msg  : Result := send_event_msg(nData);   //微信平台接口：发送消息
+   cBC_WeChat_edit_shopclients : Result := edit_shopclients(nData);   //微信平台接口：新增商城用户
+   cBC_WeChat_edit_shopgoods  : Result := edit_shopgoods(nData);   //微信平台接口：添加商品
+   cBC_WeChat_get_shoporders  : Result := get_shoporders(nData);   //微信平台接口：获取订单信息
+   cBC_WeChat_complete_shoporders  : Result := complete_shoporders(nData);   //微信平台接口：修改订单状态
+   cBC_WeChat_get_shoporderbyno : Result := get_shoporderbyno(nData);   //微信平台接口：根据订单号获取订单信息
    else
     begin
       Result := False;
@@ -1337,7 +1389,7 @@ begin
           Continue;
           //Has Saved
 
-          nStr := MakeSQLByStr([SF('C_ID', FieldByName('XOB_Code').AsString),
+          nStr := MakeSQLByStr([SF('C_ID', FieldByName('XOB_ID').AsString),
                   SF('C_Name', FieldByName('XOB_Name').AsString),
                   SF('C_PY', FieldByName('XOB_JianPin').AsString),
                   SF('C_Param', FieldByName('XOB_ID').AsString),
@@ -1671,6 +1723,433 @@ begin
     end;
   finally
     gDBConnManager.ReleaseConnection(nDBWorker);
+  end;
+end;
+
+//Date: 2016-09-20
+//Parm: 防伪码[FIn.FData]
+//Desc: 防伪码校验
+function TWorkerBusinessCommander.CheckSecurityCodeValid(var nData: string): Boolean;
+var
+  nStr,nCode,nBill_id: string;
+  nSprefix:string;
+  nIdx,nIdlen:Integer;
+  nDs:TDataSet;
+  nBills: TLadingBillItems;
+begin
+  nSprefix := '';
+  nidlen := 0;
+  Result := True;
+  nCode := FIn.FData;
+  if nCode='' then
+  begin
+    nData := '';
+    FOut.FData := nData;
+    Exit;
+  end;
+
+  nStr := 'Select B_Prefix, B_IDLen From %s ' +
+          'Where B_Group=''%s'' And B_Object=''%s''';
+  nStr := Format(nStr, [sTable_SerialBase, sFlag_BusGroup, sFlag_BillNo]);
+  nDs :=  gDBConnManager.WorkerQuery(FDBConn, nStr);
+
+  if nDs.RecordCount>0 then
+  begin
+    nSprefix := nDs.FieldByName('B_Prefix').AsString;
+    nIdlen := nDs.FieldByName('B_IDLen').AsInteger;
+    nIdlen := nIdlen-length(nSprefix);
+  end;
+
+  //生成提货单号
+  nBill_id := nSprefix+Copy(nCode,Length(nCode)-nIdlen+1,nIdlen);
+
+  //查询数据库
+  nStr := 'Select L_ID,L_ZhiKa,L_CusID,L_CusName,L_Type,L_StockNo,' +
+      'L_StockName,L_Truck,L_Value,L_Price,L_ZKMoney,L_Status,' +
+      'L_NextStatus,L_Card,L_IsVIP,L_PValue,L_MValue From $Bill b ';
+  nStr := nStr + 'Where L_ID=''$CD''';
+  nStr := MacroValue(nStr, [MI('$Bill', sTable_Bill), MI('$CD', nBill_id)]);
+
+  nDs := gDBConnManager.WorkerQuery(FDBConn, nStr);
+  if nDs.RecordCount<1 then
+  begin
+    SetLength(nBills, 1);
+    ZeroMemory(@nBills[0],0);
+    FOut.FData := CombineBillItmes(nBills);
+    Exit;
+  end;
+
+  SetLength(nBills, nDs.RecordCount);
+  nIdx := 0;
+  nDs.First;
+  while not nDs.eof do
+  begin
+    with  nBills[nIdx] do
+    begin
+      FID         := nDs.FieldByName('L_ID').AsString;
+      FZhiKa      := nDs.FieldByName('L_ZhiKa').AsString;
+      FCusID      := nDs.FieldByName('L_CusID').AsString;
+      FCusName    := nDs.FieldByName('L_CusName').AsString;
+      FTruck      := nDs.FieldByName('L_Truck').AsString;
+
+      FType       := nDs.FieldByName('L_Type').AsString;
+      FStockNo    := nDs.FieldByName('L_StockNo').AsString;
+      FStockName  := nDs.FieldByName('L_StockName').AsString;
+      FValue      := nDs.FieldByName('L_Value').AsFloat;
+      FPrice      := nDs.FieldByName('L_Price').AsFloat;
+
+      FCard       := nDs.FieldByName('L_Card').AsString;
+      FIsVIP      := nDs.FieldByName('L_IsVIP').AsString;
+      FStatus     := nDs.FieldByName('L_Status').AsString;
+      FNextStatus := nDs.FieldByName('L_NextStatus').AsString;
+      FSelected := True;
+      if FIsVIP = sFlag_TypeShip then
+      begin
+        FStatus    := sFlag_TruckZT;
+        FNextStatus := sFlag_TruckOut;
+      end;
+
+      if FStatus = sFlag_BillNew then
+      begin
+        FStatus     := sFlag_TruckNone;
+        FNextStatus := sFlag_TruckNone;
+      end;
+
+      FPData.FValue := nDs.FieldByName('L_PValue').AsFloat;
+      FMData.FValue := nDs.FieldByName('L_MValue').AsFloat;
+    end;
+
+    Inc(nIdx);
+    nDs.Next;
+  end;
+
+  FOut.FData := CombineBillItmes(nBills);
+end;
+
+//Date: 2016-09-20
+//Parm: 
+//Desc: 工厂待装查询
+function TWorkerBusinessCommander.GetWaitingForloading(var nData: string):Boolean;
+var nFind: Boolean;
+    nLine: PLineItem;
+    nIdx,nInt, i: Integer;
+    nQueues: TQueueListItems;
+begin
+  gTruckQueueManager.RefreshTrucks(True);
+  Sleep(320);
+  //刷新数据
+
+  with gTruckQueueManager do
+  try
+    SyncLock.Enter;
+    Result := True;
+
+    FListB.Clear;
+    FListC.Clear;
+
+    i := 0;
+    SetLength(nQueues, 0);
+    //保存查询记录
+
+    for nIdx:=0 to Lines.Count - 1 do
+    begin
+      nLine := Lines[nIdx];
+
+      nFind := False;
+      for nInt:=Low(nQueues) to High(nQueues) do
+      begin
+        with nQueues[nInt] do
+          if FStockNo = nLine.FStockNo then
+          begin
+            Inc(FLineCount);
+            FTruckCount := FTruckCount + nLine.FRealCount;
+
+            nFind := True;
+            Break;
+          end;
+      end;
+
+      if not nFind then
+      begin
+        SetLength(nQueues, i+1);
+        with nQueues[i] do
+        begin
+          FStockNO    := nLine.FStockNo;
+          FStockName  := nLine.FStockName;
+
+          FLineCount  := 1;
+          FTruckCount := nLine.FRealCount;
+        end;
+
+        Inc(i);
+      end;
+    end;
+
+    for nIdx:=Low(nQueues) to High(nQueues) do
+    begin
+      with FListB, nQueues[nIdx] do
+      begin
+        Clear;
+
+        Values['StockName'] := FStockName;
+        Values['LineCount'] := IntToStr(FLineCount);
+        Values['TruckCount']:= IntToStr(FTruckCount);
+      end;
+
+      FListC.Add(PackerEncodeStr(FListB.Text));
+    end;
+
+    FOut.FData := PackerEncodeStr(FListC.Text);
+  finally
+    SyncLock.Leave;
+  end;
+end;
+
+//Date: 2016-09-23
+//Parm:
+//Desc: 网上订单可下单数量查询
+function TWorkerBusinessCommander.GetBillSurplusTonnage(var nData:string):boolean;
+var nStr,nCusID: string;
+    nVal,nCredit,nPrice: Double;
+    nStockNo:string;
+begin
+  nCusID := '';
+  nStockNo := '';
+  nPrice := 1;
+  nCredit := 0;
+  nVal := 0;
+  Result := False;
+  nCusID := Fin.FData;
+  if nCusID='' then Exit;  
+  //未传递客户号
+
+  nStockNo := Fin.FExtParam;
+  if nStockNo='' then Exit;
+  //未传递产品编号
+
+  //产品销售价格表擦查询单价
+  nStr := 'select p_price from %s where P_StockNo=''%s'' order by P_Date desc';
+  //nStr := Format(nStr, [sTable_SPrice, nStockNo]);
+  with gDBConnManager.WorkerQuery(FDBConn, nStr) do
+  begin
+    if RecordCount < 1 then
+    begin
+      nData := '未设单价，查询失败!';
+      Exit;
+    end;
+    nPrice := FieldByName('p_price').AsFloat;
+    if Float2PInt(nPrice, 100000, False)<=0 then
+    begin
+      nData := '单价设置不正确，查询失败!';
+      Exit;    
+    end;
+  end;
+
+  //调用GetCustomerValidMoney查询可用金额
+  Result := GetCustomerValidMoney(nData);
+  if not Result then Exit;
+  nVal := StrToFloat(FOut.FData);
+  if Float2PInt(nVal, cPrecision, False)<=0 then
+  begin
+    nData := '编号为[ %s ]的客户账户可用金额不足.';
+    nData := Format(nData, [nCusID]);
+    Exit;
+  end;
+  FOut.FData := FormatFloat('0.0000',nVal/nPrice);
+  Result := True;  
+end;
+
+//获取订单信息，用于网上下单
+function TWorkerBusinessCommander.GetOrderInfo(var nData:string):Boolean;
+var nList: TStrings;
+    nOut: TWorkerBusinessCommand;
+    nCard,nParam:string;
+    nLoginAccount,nLoginCusId,nOrderCusId:string;
+    nSql:string;
+begin
+  nCard := fin.FData;
+  nLoginAccount := FIn.FExtParam;
+  nParam := sFlag_LoadExtInfo;
+  Result := CallMe(cBC_ReadYTCard, nCard, '', @nOut);
+  if not Result then
+  begin
+    nCard := nOut.FBase.FErrDesc;
+    Exit;
+  end;
+  nList := TStringList.Create;
+  try
+    nList.Text := PackerDecodeStr(nOut.FData);
+    nCard := nList[0];
+    //cBC_ReadYTCard读取指令允许读取多条,取第一条
+  finally
+    nList.Free;
+  end;
+
+  Result := CallMe(cBC_VerifyYTCard, nCard, nParam, @nOut);
+  if not Result then
+  begin
+    nCard := nOut.FBase.FErrDesc;
+  end;
+  FOut.FData := nCard;
+
+  //------防伪校验begin-------
+  nList := TStringList.Create;
+  try
+    nList.Text := PackerDecodeStr(nCard);
+    nOrderCusId := nList.Values['XCB_Client'];
+  finally
+    nList.Free;
+  end;
+
+  nSql := 'select i_itemid from %s where i_group=''%s'' and i_item=''%s'' and i_info=''%s''';
+  nSql := Format(nSql,[sTable_ExtInfo,sFlag_CustomerItem,'手机',nLoginAccount]);
+
+  with gDBConnManager.WorkerQuery(FDBConn, nSql) do
+  begin
+    //未找到注册的手机号
+    if RecordCount<1 then
+    begin
+      Result := False;
+      Exit;
+    end;
+
+    nLoginCusId := FieldByName('i_itemid').AsString;
+    //当前登录账户绑定的客户号与云天订单号所属客户号不一致
+    if nLoginCusId<>nOrderCusId then
+    begin
+      Result := False;
+      Exit;
+    end;
+  end;
+  //------防伪校验end-------
+end;
+
+
+//获取客户注册信息
+function TWorkerBusinessCommander.getCustomerInfo(var nData:string):Boolean;
+var
+  frmCall:TFrmCallWechatWebService;
+begin
+  Result := False;
+  frmCall := TFrmCallWechatWebService.Create(nil);
+  try
+    Result := frmCall.ExecuteWebAction(cBC_WeChat_getCustomerInfo,fin.FData);
+    nData := fin.FData;
+    FOut.FData := fin.FData;
+  finally
+    frmCall.Free;
+  end;
+end;
+
+//客户与微信账号绑定
+function TWorkerBusinessCommander.get_Bindfunc(var nData:string):Boolean;
+var
+  frmCall:TFrmCallWechatWebService;
+begin
+  Result := False;
+  frmCall := TFrmCallWechatWebService.Create(nil);
+  try
+    Result := frmCall.ExecuteWebAction(cBC_WeChat_get_Bindfunc,fin.FData);
+    FOut.FData := 'Y';
+  finally
+    frmCall.Free;
+  end;
+end;
+
+//发送消息
+function TWorkerBusinessCommander.send_event_msg(var nData:string):Boolean;
+var
+  frmCall:TFrmCallWechatWebService;
+begin
+  Result := False;
+  frmCall := TFrmCallWechatWebService.Create(nil);
+  try
+    Result := frmCall.ExecuteWebAction(cBC_WeChat_send_event_msg,fin.FData);
+//    Result := gFrmCallWechatWebService.ExecuteWebAction(cBC_WeChat_send_event_msg,fin.FData);
+    FOut.FData := 'Y';
+  finally
+    frmCall.Free;
+  end;
+end;
+
+//新增商城用户
+function TWorkerBusinessCommander.edit_shopclients(var nData:string):Boolean;
+var
+  frmCall:TFrmCallWechatWebService;
+begin
+  Result := False;
+  frmCall := TFrmCallWechatWebService.Create(nil);
+  try
+    Result := frmCall.ExecuteWebAction(cBC_WeChat_edit_shopclients,fin.FData);
+//    Result := gFrmCallWechatWebService.ExecuteWebAction(cBC_WeChat_edit_shopclients,fin.FData);
+    FOut.FData := 'Y';
+  finally
+    frmCall.Free;
+  end;
+end;
+
+//添加商品
+function TWorkerBusinessCommander.edit_shopgoods(var nData:string):Boolean;
+var
+  frmCall:TFrmCallWechatWebService;
+begin
+  Result := False;
+  frmCall := TFrmCallWechatWebService.Create(nil);
+  try
+    Result := frmCall.ExecuteWebAction(cBC_WeChat_edit_shopgoods,fin.FData);
+//    Result := gFrmCallWechatWebService.ExecuteWebAction(cBC_WeChat_edit_shopgoods,fin.FData);
+  finally
+    frmCall.Free;
+  end;
+end;
+
+//获取订单信息
+function TWorkerBusinessCommander.get_shoporders(var nData:string):Boolean;
+var
+  frmCall:TFrmCallWechatWebService;
+begin
+  Result := False;
+  frmCall := TFrmCallWechatWebService.Create(nil);
+  try
+    Result := frmCall.ExecuteWebAction(cBC_WeChat_get_shoporders,fin.FData);
+//    Result := gFrmCallWechatWebService.ExecuteWebAction(cBC_WeChat_get_shoporders,fin.FData);
+    nData := fin.FData;
+    FOut.FData := fin.FData;
+  finally
+    frmCall.Free;
+  end;
+end;
+
+//根据订单号获取订单信息
+function TWorkerBusinessCommander.get_shoporderbyno(var nData:string):Boolean;
+var
+  frmCall:TFrmCallWechatWebService;
+begin
+  Result := False;
+  frmCall := TFrmCallWechatWebService.Create(nil);
+  try
+    Result := frmCall.ExecuteWebAction(cBC_WeChat_get_shoporderbyNO,fin.FData);
+//    Result := gFrmCallWechatWebService.ExecuteWebAction(cBC_WeChat_get_shoporders,fin.FData);
+    nData := fin.FData;
+    FOut.FData := fin.FData;
+  finally
+    frmCall.Free;
+  end;
+end;
+
+//修改订单状态
+function TWorkerBusinessCommander.complete_shoporders(var nData:string):Boolean;
+var
+  frmCall:TFrmCallWechatWebService;
+begin
+  Result := False;
+  frmCall := TFrmCallWechatWebService.Create(nil);
+  try
+    Result := frmCall.ExecuteWebAction(cBC_WeChat_complete_shoporders,fin.FData);
+//    Result := gFrmCallWechatWebService.ExecuteWebAction(cBC_WeChat_get_shoporders,fin.FData);
+    FOut.FData := 'Y';
+  finally
+    frmCall.Free;
   end;
 end;
 
@@ -3472,7 +3951,10 @@ begin
                 SF('PAW_Temp136', FieldByName('PAW_Temp136').AsString),
                 SF('PAW_Temp137', FieldByName('PAW_Temp137').AsString),
                 SF('PAW_Temp138', FieldByName('PAW_Temp138').AsString),
-                SF('PAW_Temp139', FieldByName('PAW_Temp139').AsString)
+                SF('PAW_Temp139', FieldByName('PAW_Temp139').AsString),
+                SF('PAW_Temp141', FieldByName('PAW_Temp141').AsString),
+                SF('PAW_Temp143', FieldByName('PAW_Temp143').AsString),
+                SF('PAW_Temp145', FieldByName('PAW_Temp145').AsString)
                 ],sTable_YT_Batchcode, nStr, False);
         //更新信息
         FListA.Add(nStr);
@@ -3692,7 +4174,10 @@ begin
                 SF('PAW_Temp136', FieldByName('PAW_Temp136').AsString),
                 SF('PAW_Temp137', FieldByName('PAW_Temp137').AsString),
                 SF('PAW_Temp138', FieldByName('PAW_Temp138').AsString),
-                SF('PAW_Temp139', FieldByName('PAW_Temp139').AsString)
+                SF('PAW_Temp139', FieldByName('PAW_Temp139').AsString),
+                SF('PAW_Temp141', FieldByName('PAW_Temp141').AsString),
+                SF('PAW_Temp143', FieldByName('PAW_Temp143').AsString),
+                SF('PAW_Temp145', FieldByName('PAW_Temp145').AsString)
                 ],sTable_YT_Batchcode, '', True);
         //插入信息
 

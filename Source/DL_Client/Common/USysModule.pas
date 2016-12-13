@@ -38,7 +38,7 @@ uses
   UFramePurchaseOrder, UFormPurchaseOrder, UFormPurchasing,
   UFrameQueryOrderDetail, UFrameOrderCard,  UFrameOrderDetail,
   UFormGetProvider, UFormGetMeterails, UFramePOrderBase, UFormPOrderBase,
-  UFormGetPOrderBase, UFormOrderDtl,
+  UFormGetPOrderBase, UFrameWeixinBind,UFormWeixinBind,UFormOrderDtl,
   {$IFDEF MicroMsg}
   UFrameWeiXinAccount, UFormWeiXinAccount, UFrameWeiXinSendlog,
   UFormWeiXinSendlog,

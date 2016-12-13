@@ -18,6 +18,11 @@ const
   cShouJuIDLength       = 7;                         //财务收据标识长度
   cItemIconIndex        = 11;                        //默认的提货单列表图标
 
+  cSendWeChatMsgType_AddBill=1; //开提货单
+  cSendWeChatMsgType_OutFactory=2; //车辆出厂
+  cSendWeChatMsgType_Report=3; //报表
+  cSendWeChatMsgType_DelBill=4; //删提货单  
+
 const
   {*Frame ID*}
   cFI_FrameSysLog       = $0001;                     //系统日志
@@ -82,6 +87,7 @@ const
   cFI_FrameWXSendLog    = $0111;                     //发送日志
   cFI_FrameYTBatchcode  = $0112;                     //云天批次编号记录 
   cFI_FrameZTLines      = $0113;                     //栈台信息
+  cFI_FrameWXBind       = $0115;                     //发送日志  
 
   cFI_FormMemo          = $1000;                     //备注窗口
   cFI_FormBackup        = $1001;                     //数据备份
@@ -166,6 +172,7 @@ const
 
   cFI_FormTransBase     = $1093;                     //短倒办理
 
+  cFI_FormWeixinBind    = $1095;                     //微信账号绑定  
   {*Command*}
   cCmd_RefreshData      = $0002;                     //刷新数据
   cCmd_ViewSysLog       = $0003;                     //系统日志
@@ -184,6 +191,7 @@ type
     FMainTitle  : string;                            //主窗体标题
     FHintText   : string;                            //提示文本
     FCopyRight  : string;                            //主窗体提示内容
+    FFactory    : string;                            //工厂ID
 
     FUserID     : string;                            //用户标识
     FUserName   : string;                            //当前用户
@@ -229,6 +237,17 @@ type
     FModule: integer;                                //模块标识
     FItemType: TModuleItemType;                      //模块类型
   end;
+
+  PMallOrderItem = ^stMallOrderItem;
+  stMallOrderItem = record
+    FOrder_id:string;
+    FOrdernumber:string;
+    FGoodsID:string;
+    FGoodstype:string;
+    FGoodsname:string;
+    FData:string;
+  end;
+  //网上商城订单明细
 
 //------------------------------------------------------------------------------
 var
@@ -375,6 +394,7 @@ begin
 
   AddMenuModuleItem('MAIN_W01', cFI_FrameWXAccount);
   AddMenuModuleItem('MAIN_W02', cFI_FrameWXSendLog);
+  AddMenuModuleItem('MAIN_W03', cFI_FrameWXBind);  
 end;
 
 //Desc: 清理模块列表

@@ -247,7 +247,7 @@ function PrintOrderReport(const nOrder: string;  const nAsk: Boolean): Boolean;
 //打印采购单
 function PrintPoundReport(const nPound: string; nAsk: Boolean): Boolean;
 //打印榜单
-function PrintHuaYanReport(const nHID, nStockName: string; const nAsk: Boolean): Boolean;
+function PrintHuaYanReport(const nHID, nStockName,nOutFact: string; const nAsk: Boolean): Boolean;
 function PrintHeGeReport(const nHID: string; const nAsk: Boolean): Boolean;
 //化验单,合格证
 function PrintBillLoadReport(nBill: string; const nAsk: Boolean): Boolean;
@@ -256,6 +256,24 @@ function PrintBillFYDReport(const nBill: string;  const nAsk: Boolean): Boolean;
 //打印现场发运单
 function IFPrintFYD: Boolean;
 //是否打印
+
+function getCustomerInfo(const nXmlStr: string): string;
+//获取客户注册信息
+
+function get_Bindfunc(const nXmlStr: string): string;
+//客户与微信账号绑定
+
+function send_event_msg(const nXmlStr: string): string;
+//发送消息
+
+function edit_shopclients(const nXmlStr: string): string;
+//新增商城用户
+
+function edit_shopgoods(const nXmlStr: string): string;
+//添加商品
+
+function get_shoporders(const nXmlStr: string): string;
+//获取订单信息
 implementation
 
 //Desc: 记录日志
@@ -2222,7 +2240,8 @@ begin
   FDR.AddParamItem(nParam);
 
   FDR.Dataset1.DataSet := FDM.SqlTemp;
-  FDR.ShowReport;
+  FDR.PrintReport;
+//  FDR.ShowReport;
   Result := FDR.PrintSuccess;
 end;
 
@@ -2410,17 +2429,19 @@ begin
     Result := gPath + sReportDir + 'HuaYan_kzf.fr3'
   else if Pos('qz', Result) > 0 then
     Result := gPath + sReportDir + 'HuaYan_qz.fr3'
+  else if Pos('a32', Result) > 0 then
+    Result := gPath + sReportDir + 'HuaYan32_psa.fr3'
   else if Pos('32', Result) > 0 then
     Result := gPath + sReportDir + 'HuaYan32.fr3'
   else if Pos('42', Result) > 0 then
     Result := gPath + sReportDir + 'HuaYan42.fr3'
   else if Pos('52', Result) > 0 then
-    Result := gPath + sReportDir + 'HuaYan42.fr3'
+    Result := gPath + sReportDir + 'HuaYan52.5.fr3'
   else Result := '';
 end;
 
 //Desc: 打印标识为nHID的化验单
-function PrintHuaYanReport(const nHID, nStockName: string;
+function PrintHuaYanReport(const nHID, nStockName,nOutFact: string;
   const nAsk: Boolean): Boolean;
 var nStr,nSR: string;
     nOut: TWorkerBusinessCommand;
@@ -2434,8 +2455,8 @@ begin
 
   if not CallBusinessCommand(cBC_SyncYTBatchCodeInfo, nHID, '', @nOut) then Exit;
 
-  nStr := 'Select * From %s Where Paw_Analy=''%s''';
-  nStr := Format(nStr, [sTable_YT_Batchcode, nHID]);
+  nStr := 'Select OutFact=''%s'',* From %s Where Paw_Analy=''%s''';
+  nStr := Format(nStr, [nOutFact,sTable_YT_Batchcode, nHID]);
 
   if FDM.QueryTemp(nStr).RecordCount < 1 then
   begin
@@ -2518,5 +2539,58 @@ begin
   Result    := (nP.FCommand = cCmd_ModalResult) and (nP.FParamA = mrOK);
 end;
 
+//获取客户注册信息
+function getCustomerInfo(const nXmlStr: string): string;
+var nOut: TWorkerBusinessCommand;
+begin
+  Result := '';
+  if CallBusinessCommand(cBC_WeChat_getCustomerInfo, nXmlStr, '', @nOut) then
+    Result := nOut.FData;
+end;
+
+//客户与微信账号绑定
+function get_Bindfunc(const nXmlStr: string): string;
+var nOut: TWorkerBusinessCommand;
+begin
+  Result := '';
+  if CallBusinessCommand(cBC_WeChat_get_Bindfunc, nXmlStr, '', @nOut) then
+    Result := nOut.FData;
+end;
+
+//发送消息
+function send_event_msg(const nXmlStr: string): string;
+var nOut: TWorkerBusinessCommand;
+begin
+  Result := '';
+  if CallBusinessCommand(cBC_WeChat_send_event_msg, nXmlStr, '', @nOut) then
+    Result := nOut.FData;
+end;
+
+//新增商城用户
+function edit_shopclients(const nXmlStr: string): string;
+var nOut: TWorkerBusinessCommand;
+begin
+  Result := '';
+  if CallBusinessCommand(cBC_WeChat_edit_shopclients, nXmlStr, '', @nOut) then
+    Result := nOut.FData;
+end;
+
+//添加商品
+function edit_shopgoods(const nXmlStr: string): string;
+var nOut: TWorkerBusinessCommand;
+begin
+  Result := '';
+  if CallBusinessCommand(cBC_WeChat_edit_shopgoods, nXmlStr, '', @nOut) then
+    Result := nOut.FData;
+end;
+
+//获取订单信息
+function get_shoporders(const nXmlStr: string): string;
+var nOut: TWorkerBusinessCommand;
+begin
+  Result := '';
+  if CallBusinessCommand(cBC_WeChat_get_shoporders, nXmlStr, '', @nOut) then
+    Result := nOut.FData;
+end;
 
 end.

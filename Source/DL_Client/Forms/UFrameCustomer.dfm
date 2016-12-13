@@ -12,6 +12,9 @@ inherited fFrameCustomer: TfFrameCustomer
     inherited BtnDel: TToolButton
       OnClick = BtnDelClick
     end
+    inherited btnWebMall: TToolButton
+      OnClick = btnWebMallClick
+    end
   end
   inherited cxGrid1: TcxGrid
     Top = 199

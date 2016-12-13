@@ -35,6 +35,9 @@ inherited fFrameBill: TfFrameBill
           Kind = bkEllipsis
         end>
       Properties.OnButtonClick = EditIDPropertiesButtonClick
+      Style.BorderColor = clWindowFrame
+      Style.BorderStyle = ebsSingle
+      Style.ButtonStyle = btsHotFlat
       TabOrder = 1
       OnKeyPress = OnCtrlKeyPress
       Width = 105
@@ -49,6 +52,9 @@ inherited fFrameBill: TfFrameBill
           Kind = bkEllipsis
         end>
       Properties.OnButtonClick = EditIDPropertiesButtonClick
+      Style.BorderColor = clWindowFrame
+      Style.BorderStyle = ebsSingle
+      Style.ButtonStyle = btsHotFlat
       TabOrder = 2
       OnKeyPress = OnCtrlKeyPress
       Width = 105
@@ -58,6 +64,8 @@ inherited fFrameBill: TfFrameBill
       Top = 94
       Hint = 'T.L_ID'
       ParentFont = False
+      Style.BorderColor = clWindowFrame
+      Style.BorderStyle = ebsSingle
       TabOrder = 6
       Width = 100
     end
@@ -66,6 +74,8 @@ inherited fFrameBill: TfFrameBill
       Top = 94
       Hint = 'T.L_CusName'
       ParentFont = False
+      Style.BorderColor = clWindowFrame
+      Style.BorderStyle = ebsSingle
       TabOrder = 7
       Width = 125
     end
@@ -74,6 +84,8 @@ inherited fFrameBill: TfFrameBill
       Top = 94
       Hint = 'T.L_Truck'
       ParentFont = False
+      Style.BorderColor = clWindowFrame
+      Style.BorderStyle = ebsSingle
       TabOrder = 9
       Width = 100
     end
@@ -82,6 +94,8 @@ inherited fFrameBill: TfFrameBill
       Top = 94
       Hint = 'T.L_Value'
       ParentFont = False
+      Style.BorderColor = clWindowFrame
+      Style.BorderStyle = ebsSingle
       TabOrder = 10
       Width = 100
     end
@@ -95,6 +109,9 @@ inherited fFrameBill: TfFrameBill
           Kind = bkEllipsis
         end>
       Properties.OnButtonClick = EditDatePropertiesButtonClick
+      Style.BorderColor = clWindowFrame
+      Style.BorderStyle = ebsSingle
+      Style.ButtonStyle = btsHotFlat
       TabOrder = 4
       Width = 176
     end
@@ -108,6 +125,9 @@ inherited fFrameBill: TfFrameBill
           Kind = bkEllipsis
         end>
       Properties.OnButtonClick = EditIDPropertiesButtonClick
+      Style.BorderColor = clWindowFrame
+      Style.BorderStyle = ebsSingle
+      Style.ButtonStyle = btsHotFlat
       TabOrder = 0
       OnKeyPress = OnCtrlKeyPress
       Width = 105
@@ -117,6 +137,8 @@ inherited fFrameBill: TfFrameBill
       Top = 94
       Hint = 'T.L_StockName'
       ParentFont = False
+      Style.BorderColor = clWindowFrame
+      Style.BorderStyle = ebsSingle
       TabOrder = 8
       Width = 125
     end
@@ -125,6 +147,8 @@ inherited fFrameBill: TfFrameBill
       Top = 36
       Caption = #26597#35810#24050#21024#38500
       ParentFont = False
+      Style.BorderColor = clWindowFrame
+      Style.BorderStyle = ebsSingle
       TabOrder = 5
       Transparent = True
       OnClick = CheckDeleteClick
@@ -140,6 +164,9 @@ inherited fFrameBill: TfFrameBill
           Kind = bkEllipsis
         end>
       Properties.OnButtonClick = EditIDPropertiesButtonClick
+      Style.BorderColor = clWindowFrame
+      Style.BorderStyle = ebsSingle
+      Style.ButtonStyle = btsHotFlat
       TabOrder = 3
       OnKeyPress = OnCtrlKeyPress
       Width = 105
@@ -147,60 +174,60 @@ inherited fFrameBill: TfFrameBill
     inherited dxGroup1: TdxLayoutGroup
       inherited GroupSearch1: TdxLayoutGroup
         object dxLayout1Item8: TdxLayoutItem
-          Caption = #25552#36135#21333#21495':'
+          CaptionOptions.Text = #25552#36135#21333#21495':'
           Control = EditLID
           ControlOptions.ShowBorder = False
         end
         object dxLayout1Item1: TdxLayoutItem
-          Caption = #23458#25143#21517#31216':'
+          CaptionOptions.Text = #23458#25143#21517#31216':'
           Control = EditCus
           ControlOptions.ShowBorder = False
         end
         object dxLayout1Item2: TdxLayoutItem
-          Caption = #36710#29260#21495#30721':'
+          CaptionOptions.Text = #36710#29260#21495#30721':'
           Control = EditTruck
           ControlOptions.ShowBorder = False
         end
         object dxlytmLayout1Item11: TdxLayoutItem
-          Caption = #21345#29255#32534#21495':'
+          CaptionOptions.Text = #21345#29255#32534#21495':'
           Control = EditYTCard
           ControlOptions.ShowBorder = False
         end
         object dxLayout1Item7: TdxLayoutItem
-          Caption = #26085#26399#31579#36873':'
+          CaptionOptions.Text = #26085#26399#31579#36873':'
           Control = EditDate
           ControlOptions.ShowBorder = False
         end
         object dxLayout1Item10: TdxLayoutItem
-          ShowCaption = False
+          CaptionOptions.Visible = False
           Control = CheckDelete
           ControlOptions.ShowBorder = False
         end
       end
       inherited GroupDetail1: TdxLayoutGroup
         object dxLayout1Item3: TdxLayoutItem
-          Caption = #25552#36135#21333#21495':'
+          CaptionOptions.Text = #25552#36135#21333#21495':'
           Control = cxTextEdit1
           ControlOptions.ShowBorder = False
         end
         object dxLayout1Item4: TdxLayoutItem
-          Caption = #23458#25143#21517#31216':'
+          CaptionOptions.Text = #23458#25143#21517#31216':'
           Control = cxTextEdit2
           ControlOptions.ShowBorder = False
         end
         object dxLayout1Item9: TdxLayoutItem
-          Caption = #27700#27877#21697#31181':'
+          CaptionOptions.Text = #27700#27877#21697#31181':'
           Control = Edit1
           ControlOptions.ShowBorder = False
         end
         object dxLayout1Item6: TdxLayoutItem
-          Caption = #25552#36135#36710#36742':'
+          CaptionOptions.Text = #25552#36135#36710#36742':'
           Control = cxTextEdit4
           ControlOptions.ShowBorder = False
         end
         object dxLayout1Item5: TdxLayoutItem
-          AutoAligns = [aaVertical]
-          Caption = #25552#36135#37327'('#21544'):'
+          AlignHorz = ahLeft
+          CaptionOptions.Text = #25552#36135#37327'('#21544'):'
           Control = cxTextEdit3
           ControlOptions.ShowBorder = False
         end
