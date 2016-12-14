@@ -87,7 +87,7 @@ begin
     else dxLayout1Item3.Caption := '交货单号';
 
     InitFormData;
-    ActionComPort(False);
+//    ActionComPort(False);
 
     FParam.FCommand := cCmd_ModalResult;
     FParam.FParamA := ShowModal;
@@ -107,6 +107,12 @@ begin
   EditTruck.Text := FParam.FParamB;
   EditBill.Text := AdjustListStrFormat(FParam.FParamA, '''', False, ',', False);
   EditCard.Text := FParam.FParamD;
+  if EditCard.Text<>'' then
+  begin
+    EditBill.Enabled := False;
+    EditTruck.Enabled := False;
+    EditCard.Enabled := False;
+  end;
 end;
 
 //Desc: 串口操作

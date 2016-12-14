@@ -631,7 +631,7 @@ begin
   nOrderItem := FWebOrderItems[FWebOrderIndex];
   FWebOrderID := nOrderItem.FOrdernumber;
   nRepeat := IsRepeatCard(FWebOrderID);
-  BtnOK.Enabled := not nRepeat;
+
   if nRepeat then
   begin
     ShowMsg('此订单已成功办卡，请勿重复操作',sHint);
@@ -704,6 +704,7 @@ begin
     FCardData.Values['XCB_CementCodeID'] := nCementCodeID;
     EditFQ.Text     := FCardData.Values['XCB_CementCode'];
   end;
+  BtnOK.Enabled := not nRepeat;  
 end;
 
 procedure TfFormNewCard.AddListViewItem(

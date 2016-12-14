@@ -125,13 +125,13 @@ Locale=2052
 CodePage=936
 [Version Info Keys]
 CompanyName=Runsoft(润)工作室
-FileDescription=标准中间件框架
+FileDescription=
 FileVersion=2.0.1.0
-InternalName=MIT
+InternalName=GPWS
 LegalCopyright=GPL公共许可
 LegalTrademarks=
 OriginalFilename=
-ProductName=MIT中间件
+ProductName=GPWS中间件
 ProductVersion=1.0.0.0
 Comments=支持插件扩展的标准中间件框架
 [Excluded Packages]

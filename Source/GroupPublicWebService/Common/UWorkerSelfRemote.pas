@@ -67,7 +67,12 @@ implementation
 uses
   UFormWait, Forms, USysLoger, UMITConst, USysDB, MIT_Service_Intf,
   UMgrParam;
-
+  
+//Desc: 记录nEvent日志
+procedure WriteLog(const nEvent: string);
+begin
+  gSysLoger.AddLog(TClientBusinessHardware, 'uworkerselfremove.writelog' , nEvent);
+end;
 //Date: 2014-09-15
 //Parm: 对象;命令;数据;参数;输出
 //Desc: 本地调用业务对象

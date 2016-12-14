@@ -1,6 +1,7 @@
 inherited fFormCard: TfFormCard
   Left = 633
   Top = 413
+  BorderStyle = bsNone
   Caption = #20851#32852#30913#21345
   ClientHeight = 182
   ClientWidth = 326

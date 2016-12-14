@@ -147,7 +147,11 @@ type
 implementation
 uses
   wechat_soap;
-  
+procedure WriteLog(const nEvent: string);
+begin
+  gSysLoger.AddLog(TBusWorkerBusinessWebchat, 'Web平台业务' , nEvent);
+end;
+
 class function TBusWorkerBusinessWebchat.FunctionName: string;
 begin
   Result := sBus_BusinessWebchat;
@@ -287,7 +291,7 @@ var nOut: TWorkerBusinessCommand;
     nIdx: Integer;
 begin
   Result := CallRemoteWorker(sCLI_BusinessCommand, FIn.FData, FIn.FExtParam,
-            @nOut, cBC_VerifPrintCode, FIn.FRemoteUL);
+            @nOut, cBC_VerifPrintCode, Trim(FIn.FRemoteUL));
   //xxxxxx
 
   BuildDefaultXMLPack;
@@ -347,7 +351,7 @@ var nOut: TWorkerBusinessCommand;
     nIdx: Integer;
 begin
   Result := CallRemoteWorker(sCLI_BusinessCommand, FIn.FData, FIn.FExtParam,
-            @nOut, cBC_WaitingForloading, FIn.FRemoteUL);
+            @nOut, cBC_WaitingForloading, Trim(FIn.FRemoteUL));
   //xxxxxx
 
   BuildDefaultXMLPack;
@@ -398,7 +402,7 @@ function TBusWorkerBusinessWebchat.GetBillSurplusTonnage(var nData:string):Boole
 var nOut: TWorkerBusinessCommand;
 begin
   Result := CallRemoteWorker(sCLI_BusinessCommand, FIn.FData, FIn.FExtParam,
-            @nOut, cBC_BillSurplusTonnage, FIn.FRemoteUL);
+            @nOut, cBC_BillSurplusTonnage, Trim(FIn.FRemoteUL));
   //xxxxxx
 
   BuildDefaultXMLPack;
@@ -445,7 +449,7 @@ var nOut: TWorkerBusinessCommand;
   nCardData:TStringList;
 begin
   Result := CallRemoteWorker(sCLI_BusinessCommand, FIn.FData, FIn.FExtParam,
-              @nOut, cBC_GetOrderInfo, FIn.FRemoteUL);
+              @nOut, cBC_GetOrderInfo, Trim(FIn.FRemoteUL));
   nCardData := TStringList.Create;
   try
     BuildDefaultXMLPack;
@@ -509,6 +513,7 @@ begin
     WriteLog('TBusWorkerBusinessWebchat.GetCustomerInfo response='+nResponse);
     FPacker.XMLBuilder.Clear;
     FPacker.XMLBuilder.ReadFromString(nResponse);
+    nObj.FPacker := FPacker;
     Result := nObj.ParseWebResponse(nResponse);
     if not Result then
     begin
@@ -569,6 +574,7 @@ begin
     FPacker.XMLBuilder.Clear;
     FPacker.XMLBuilder.ReadFromString(nResponse);
     writelog('TBusWorkerBusinessWebchat.Get_Shoporders Response:'+#13+nResponse);
+    nObj.FPacker := FPacker;
     Result := nObj.ParseWebResponse(nResponse);
     if not Result then
     begin
@@ -629,6 +635,7 @@ begin
     FPacker.XMLBuilder.Clear;
     FPacker.XMLBuilder.ReadFromString(nResponse);
     writelog('TBusWorkerBusinessWebchat.get_shoporderByNO Response:'+#13+nResponse);
+    nObj.FPacker := FPacker;
     Result := nObj.ParseWebResponse(nResponse);
     if not Result then
     begin
@@ -662,6 +669,7 @@ begin
     WriteLog('TBusWorkerBusinessWebchat.t_Bindfunc response:'+nResponse);
     FPacker.XMLBuilder.Clear;
     FPacker.XMLBuilder.ReadFromString(nResponse);
+    nObj.FPacker := FPacker;
     Result := nObj.ParseWebResponse(nResponse);
     if not Result then
     begin
@@ -693,6 +701,7 @@ begin
     WriteLog('TBusWorkerBusinessWebchat.Send_Event_Msg Response:'+#13+nResponse);
     FPacker.XMLBuilder.Clear;
     FPacker.XMLBuilder.ReadFromString(nResponse);
+    nObj.FPacker := FPacker;
     Result := nObj.ParseWebResponse(nResponse);
     if not Result then
     begin
@@ -724,6 +733,7 @@ begin
     WriteLog('TBusWorkerBusinessWebchat.Edit_ShopClients Response='+nResponse);
     FPacker.XMLBuilder.Clear;
     FPacker.XMLBuilder.ReadFromString(nResponse);
+    nObj.FPacker := FPacker;
     Result := nObj.ParseWebResponse(nResponse);
     if not Result then
     begin
@@ -755,6 +765,7 @@ begin
     WriteLog('TBusWorkerBusinessWebchat.Edit_Shopgoods Response='+nResponse);
     FPacker.XMLBuilder.Clear;
     FPacker.XMLBuilder.ReadFromString(nResponse);
+    nObj.FPacker := FPacker;
     Result := nObj.ParseWebResponse(nResponse);
     if not Result then
     begin
@@ -786,6 +797,7 @@ begin
     writelog('TBusWorkerBusinessWebchat.complete_shoporders Response'+#13+nResponse);
     FPacker.XMLBuilder.Clear;
     FPacker.XMLBuilder.ReadFromString(nResponse);
+    nObj.FPacker := FPacker;
     Result := nObj.ParseWebResponse(nResponse);
     if not Result then
     begin

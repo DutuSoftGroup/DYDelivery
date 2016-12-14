@@ -534,10 +534,10 @@ begin
 
   if FHYDan<>'' then
   begin
+    imgPrint.Visible := False;
     FDefaultPrinterName := FDR.Report1.PrintOptions.Printer;
     PrintHuaYanReport(FHYDan, FStockName, False);
   end;
-  imgPrint.Visible := False;
 end;
 
 procedure TfFormMain.imgCardClick(Sender: TObject);
