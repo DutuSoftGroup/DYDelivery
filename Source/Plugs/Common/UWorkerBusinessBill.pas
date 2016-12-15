@@ -2532,7 +2532,7 @@ begin
 
         nSQL := MakeSQLByStr([SF('L_LadeLine', FLine),
                 SF('L_LineName', FName),
-                SF('L_LineGroup', FLineGroup),
+                SF('L_LineGroup', FBillLines[nInt].FLineGroup),
                 SF('L_DaiTotal', i, sfVal),
                 SF('L_DaiNormal', i, sfVal),
                 SF('L_DaiBuCha', 0, sfVal)
@@ -2564,7 +2564,7 @@ begin
       begin
         nSQL := MakeSQLByStr([SF('L_LadeLine', FLine),
                 SF('L_LineName', FName),
-                SF('L_LineGroup', FLineGroup),
+                SF('L_LineGroup', FBillLines[nInt].FLineGroup),
                 SF('L_DaiTotal', FTotal, sfVal),
                 SF('L_DaiNormal', FNormal, sfVal),
                 SF('L_DaiBuCha', FBuCha, sfVal)
