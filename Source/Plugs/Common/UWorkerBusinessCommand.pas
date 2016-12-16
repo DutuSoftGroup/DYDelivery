@@ -1966,6 +1966,8 @@ var nList: TStrings;
     nCard,nParam:string;
     nLoginAccount,nLoginCusId,nOrderCusId:string;
     nSql:string;
+    nDataSet:TDataSet;
+    nOrderValid:Boolean;
 begin
   nCard := fin.FData;
   nLoginAccount := FIn.FExtParam;
@@ -2004,22 +2006,35 @@ begin
   nSql := 'select i_itemid from %s where i_group=''%s'' and i_item=''%s'' and i_info=''%s''';
   nSql := Format(nSql,[sTable_ExtInfo,sFlag_CustomerItem,'手机',nLoginAccount]);
 
-  with gDBConnManager.WorkerQuery(FDBConn, nSql) do
+  nDataSet := gDBConnManager.WorkerQuery(FDBConn, nSql);
+  //未找到注册的手机号
+  if nDataSet.RecordCount<1 then
   begin
-    //未找到注册的手机号
-    if RecordCount<1 then
-    begin
-      Result := False;
-      Exit;
-    end;
+    nData := '未找到注册的手机号码';
+    nout.FBase.FErrDesc := nData;  
+    Result := False;
+    Exit;
+  end;
 
-    nLoginCusId := FieldByName('i_itemid').AsString;
-    //当前登录账户绑定的客户号与云天订单号所属客户号不一致
-    if nLoginCusId<>nOrderCusId then
+  nOrderValid := False;
+    
+  while not nDataSet.Eof do
+  begin
+    nLoginCusId := nDataSet.FieldByName('i_itemid').AsString;
+    if nLoginCusId=nOrderCusId then
     begin
-      Result := False;
-      Exit;
+      nOrderValid := True;
+      Break;
     end;
+    nDataSet.Next;
+  end;
+
+  if not nOrderValid then
+  begin
+    nData := '请勿冒用其他客户的订单号.';
+    nout.FBase.FErrDesc := nData;  
+    Result := False;
+    Exit;  
   end;
   //------防伪校验end-------
 end;
