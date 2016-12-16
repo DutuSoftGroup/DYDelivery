@@ -79,7 +79,7 @@ implementation
 uses
   IniFiles, ULibFun, CPortTypes, USysLoger, USysDB, USmallFunc, UDataModule,
   UFormConn, uNewCard,USysConst,UClientWorker,UMITPacker,USysModule,USysBusiness,
-  UDataReport;
+  UDataReport,UFormInputbox;
 
 type
   TReaderType = (ptT800, pt8142);
@@ -130,7 +130,7 @@ begin
 
   gSysLoger := TSysLoger.Create(gPath + 'Logs\');
   gSysLoger.LogSync := False;
-  ShowConnectDBSetupForm(ConnCallBack);
+  ShowConnectDBSetupForm(ConnCallBack,True);
   ShowCursor(False);
 
   FDM.ADOConn.Close;
@@ -181,10 +181,14 @@ begin
 end;
 
 procedure TfFormMain.LabelTruckDblClick(Sender: TObject);
+var
+  nStr: string;
 begin
   ShowCursor(True);
-  if QueryDlg('确定要退出系统吗?', sHint) then
-       Close
+  if ShowInputPWDBox('请输入退出密码:', '用户自助查询系统', nStr) and (nStr = '6934') then
+  begin
+    Close;
+  end
   else ShowCursor(False);
 end;
 
