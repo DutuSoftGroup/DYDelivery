@@ -83,6 +83,7 @@ begin
       FCardPrinter:= ReadString(FProgID,'cardprinter','');
       FSanZhuangACIM := ReadBool(FProgID,'SanZhuangACIM',False);
       FCanCreateCard := ReadBool(FProgID,'CanCreateCard',False);
+      FAutoClose_Mintue := ReadInteger(FProgID, 'AutoCloseMintue', 1);
 
       FProberUser := 0;
       FVoiceUser := 0;

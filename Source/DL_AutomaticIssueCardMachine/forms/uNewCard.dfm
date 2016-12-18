@@ -63,6 +63,7 @@ object fFormNewCard: TfFormNewCard
       Style.Font.Style = []
       Style.IsFontAssigned = True
       TabOrder = 1
+      OnKeyDown = editWebOrderNoKeyDown
       OnKeyPress = editWebOrderNoKeyPress
       Height = 41
       Width = 377
@@ -370,7 +371,7 @@ object fFormNewCard: TfFormNewCard
       object PrintFH: TcxCheckBox
         Left = 10
         Top = 544
-        Caption = #25171#21360#29289#36164#21457#36135#21333
+        Caption = #20986#21378#25171#21360#29289#36164#21457#36135#21333#65288#21363#25910#36153#21333#65289
         ParentFont = False
         Style.BorderColor = clWindowFrame
         Style.BorderStyle = ebs3D
@@ -382,7 +383,7 @@ object fFormNewCard: TfFormNewCard
         Style.IsFontAssigned = True
         TabOrder = 20
         Transparent = True
-        Width = 239
+        Width = 471
       end
       object EditFQ: TcxButtonEdit
         Left = 78
@@ -651,5 +652,11 @@ object fFormNewCard: TfFormNewCard
       TabOrder = 1
       OnClick = lvOrdersClick
     end
+  end
+  object TimerAutoClose: TTimer
+    Enabled = False
+    OnTimer = TimerAutoCloseTimer
+    Left = 528
+    Top = 89
   end
 end

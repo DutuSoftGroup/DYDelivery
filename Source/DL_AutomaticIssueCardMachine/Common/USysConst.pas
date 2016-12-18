@@ -233,6 +233,7 @@ type
     FCardPrinter:string;                             //指定小票打印机
     FCanCreateCard:Boolean;                          //是否允许自助办卡
     FSanZhuangACIM:Boolean;                          //散装是否允许自助办卡
+    FAutoClose_Mintue:Integer;                       //用户自助办卡窗口自动关闭时间
   end;
   //系统参数
 

@@ -82,6 +82,7 @@ type
     lvOrders: TListView;
     Label1: TLabel;
     btnClear: TcxButton;
+    TimerAutoClose: TTimer;
     procedure BtnExitClick(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure FormShow(Sender: TObject);
@@ -94,6 +95,9 @@ type
     procedure EditFQPropertiesButtonClick(Sender: TObject;
       AButtonIndex: Integer);
     procedure btnClearClick(Sender: TObject);
+    procedure TimerAutoCloseTimer(Sender: TObject);
+    procedure editWebOrderNoKeyDown(Sender: TObject; var Key: Word;
+      Shift: TShiftState);
   private
     { Private declarations }
     FErrorCode:Integer;
@@ -105,6 +109,7 @@ type
     FSzttceApi:TSzttceApi;
     FGetBatchCode:Boolean;
     FWorkshopList:TList;
+    FAutoClose:Integer;    
     function DownloadOrder(const nCard:string):Boolean;
     function CheckYunTianOrderInfo(const nOrderId:string;var nWebOrderItem:stMallOrderItem):Boolean;
     function SaveBillProxy:Boolean;
@@ -185,6 +190,9 @@ begin
   end;
   ActiveControl := editWebOrderNo;
   btnOK.Enabled := False;
+  FAutoClose := gSysParam.FAutoClose_Mintue;
+  TimerAutoClose.Interval := 60*1000;
+  TimerAutoClose.Enabled := True;  
 end;
 
 procedure TfFormNewCard.BtnOKClick(Sender: TObject);
@@ -219,6 +227,7 @@ procedure TfFormNewCard.btnQueryClick(Sender: TObject);
 var
   nCardNo,nStr:string;
 begin
+  FAutoClose := gSysParam.FAutoClose_Mintue;
   btnQuery.Enabled := False;
   try
     nCardNo := Trim(editWebOrderNo.Text);
@@ -534,6 +543,7 @@ end;
 
 procedure TfFormNewCard.editWebOrderNoKeyPress(Sender: TObject; var Key: Char);
 begin
+  FAutoClose := gSysParam.FAutoClose_Mintue;
   if Key=Char(vk_return) then
   begin
     key := #0;
@@ -684,9 +694,10 @@ begin
   EditValue.Text := nOrderItem.FData;
   EditTruck.Text := nOrderItem.Ftracknumber;
   //熟料无出厂编号
-  if Pos('熟料',EditSName.Text)<>0 then
+  if Pos('熟料',EditSName.Text)>0 then
   begin
     EditFQ.Text := '';
+    BtnOK.Enabled := not nRepeat;
     Exit;
   end;
   nCorrectBatchCode := QueryCorrectBatchCode(FCardData.Text,EditValue.Text,nCementCodeID);
@@ -704,7 +715,7 @@ begin
     FCardData.Values['XCB_CementCodeID'] := nCementCodeID;
     EditFQ.Text     := FCardData.Values['XCB_CementCode'];
   end;
-  BtnOK.Enabled := not nRepeat;  
+  BtnOK.Enabled := not nRepeat;
 end;
 
 procedure TfFormNewCard.AddListViewItem(
@@ -955,8 +966,25 @@ end;
 
 procedure TfFormNewCard.btnClearClick(Sender: TObject);
 begin
+  FAutoClose := gSysParam.FAutoClose_Mintue;
   editWebOrderNo.Clear;
   ActiveControl := editWebOrderNo;
+end;
+
+procedure TfFormNewCard.TimerAutoCloseTimer(Sender: TObject);
+begin
+  if FAutoClose=0 then
+  begin
+    TimerAutoClose.Enabled := False;
+    Close;
+  end;
+  Dec(FAutoClose);
+end;
+
+procedure TfFormNewCard.editWebOrderNoKeyDown(Sender: TObject;
+  var Key: Word; Shift: TShiftState);
+begin
+  FAutoClose := gSysParam.FAutoClose_Mintue;
 end;
 
 end.

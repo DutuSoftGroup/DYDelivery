@@ -531,6 +531,12 @@ end;
 
 procedure TfFormMain.imgPrintClick(Sender: TObject);
 begin
+  if FHYDan='' then
+  begin
+    ShowMsg('当前品种无需打印化验单。',sHint);
+    Exit;
+  end;
+  
   if not Assigned(FDR) then
   begin
     FDR := TFDR.Create(Application);
