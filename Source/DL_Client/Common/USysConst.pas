@@ -224,7 +224,8 @@ type
     FPicBase    : Integer;                           //图片索引
     FPicPath    : string;                            //图片目录
     FVoiceUser  : Integer;                           //语音计数
-    FProberUser : Integer;                           //检测器技术 
+    FProberUser : Integer;                           //检测器技术
+    FSelBillFYDPrinter:Boolean;                      //打印发运单时是否选择打印机
   end;
   //系统参数
 

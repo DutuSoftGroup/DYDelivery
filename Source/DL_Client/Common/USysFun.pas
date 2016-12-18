@@ -79,6 +79,8 @@ begin
       FIconFile := ReadString(FProgID, 'IconFile', gPath + 'Icons\Icon.ini');
       FIconFile := StringReplace(FIconFile, '$Path\', gPath, [rfIgnoreCase]);
 
+      FSelBillFYDPrinter := ReadBool(FProgID, 'SelBillFYDPrinter', True);
+
       FProberUser := 0;
       FVoiceUser := 0;
 

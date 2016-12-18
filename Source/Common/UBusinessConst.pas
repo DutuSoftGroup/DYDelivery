@@ -95,6 +95,7 @@ const
   cBC_WaitingForloading       = $0092;   //工厂待装查询
   cBC_BillSurplusTonnage      = $0093;   //网上订单可下单数量查询
   cBC_GetOrderInfo            = $0094;   //获取订单信息，用于网上商城下单
+  cBC_GetOrderList            = $0103;   //获取订单列表，用于网上商城下单  
 
   cBC_WeChat_getCustomerInfo  = $0095;   //微信平台接口：获取客户注册信息
   cBC_WeChat_get_Bindfunc     = $0096;   //微信平台接口：客户与微信账号绑定

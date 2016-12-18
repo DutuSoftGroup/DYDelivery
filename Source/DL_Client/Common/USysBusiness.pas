@@ -2240,8 +2240,13 @@ begin
   FDR.AddParamItem(nParam);
 
   FDR.Dataset1.DataSet := FDM.SqlTemp;
-  FDR.PrintReport;
-//  FDR.ShowReport;
+  if gSysParam.FSelBillFYDPrinter then
+  begin
+    FDR.ShowReport;
+  end
+  else begin
+    FDR.PrintReport;
+  end;
   Result := FDR.PrintSuccess;
 end;
 

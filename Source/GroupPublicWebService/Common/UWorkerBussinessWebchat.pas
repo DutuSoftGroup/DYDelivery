@@ -109,7 +109,10 @@ type
     //网上订单可下单数量查询
 
     function GetOrderInfo(var nData:string):Boolean;
-    //获取订单信息    
+    //获取订单信息
+
+    function GetOrderList(var nData:string):Boolean;
+    //获取订单列表         
 
     function GetCustomerInfo(var nData:string):boolean;
     //获取客户注册信息
@@ -257,6 +260,7 @@ begin
     cBC_WaitingForloading      : Result := GetWaitingForloading(nData);
     cBC_BillSurplusTonnage     : Result := GetBillSurplusTonnage(nData);
     cBC_GetOrderInfo           : Result := GetOrderInfo(nData);
+    cBC_GetOrderList           : Result := GetOrderList(nData);
 
     cBC_WeChat_getCustomerInfo :Result := getCustomerInfo(nData);  //微信平台接口：获取客户注册信息
     cBC_WeChat_get_Bindfunc    :Result := get_Bindfunc(nData);  //微信平台接口：客户与微信账号绑定
@@ -443,7 +447,7 @@ end;
 //------------------------------------------------------------------------------
 //Date: 2016-10-20
 //Parm: 提货单号（云天系统大票号）
-//Desc: 获取订单信息,或网上下单时使用
+//Desc: 获取订单信息,网上下单时使用
 function TBusWorkerBusinessWebchat.GetOrderInfo(var nData:string):Boolean;
 var nOut: TWorkerBusinessCommand;
   nCardData:TStringList;
@@ -483,6 +487,64 @@ begin
       end;
     end;
   finally
+    nCardData.Free;
+  end;
+  nData := FPacker.XMLBuilder.WriteToString;
+end;
+
+//------------------------------------------------------------------------------
+//Date: 2016-12-18
+//Parm: 客户编号
+//Desc: 获取订单列表,或网上下单时使用
+function TBusWorkerBusinessWebchat.GetOrderList(var nData:string):Boolean;
+var nOut: TWorkerBusinessCommand;
+  nCardData,nCardItem:TStringList;
+  i:Integer;
+begin
+   Result := CallRemoteWorker(sCLI_BusinessCommand, FIn.FData, FIn.FExtParam,
+              @nOut, cBC_GetOrderList, Trim(FIn.FRemoteUL));
+
+  nCardData := TStringList.Create;
+  nCardItem := TStringList.Create;
+  try
+    BuildDefaultXMLPack;
+    if Result then
+    begin
+      nCardData.Text := PackerDecodeStr(nOut.FData);
+      nCardItem.Text := PackerDecodeStr(nCardData.Strings[0]);
+      with FPacker.XMLBuilder do
+      begin
+        with Root.NodeNew('head') do
+        begin
+          NodeNew('CusId').ValueAsString := nCardItem.Values['XCB_Client'];
+          NodeNew('CusName').ValueAsString := nCardItem.Values['XCB_ClientName'];
+        end;
+
+        with Root.NodeNew('Items') do
+        begin
+          for i := 0 to nCardData.Count-1 do
+          begin
+            nCardItem.Text := PackerDecodeStr(nCardData.Strings[i]);
+            with NodeNew('Item') do
+            begin
+              NodeNew('BillNumber').ValueAsString := nCardItem.Values['XCB_CardId'];
+              NodeNew('StockNo').ValueAsString := nCardItem.Values['XCB_Cement'];
+              NodeNew('StockName').ValueAsString := nCardItem.Values['XCB_CementName'];
+              NodeNew('MaxNumber').ValueAsString := nCardItem.Values['XCB_RemainNum'];
+            end;
+          end;
+        end;
+
+        with Root.NodeNew('EXMG') do
+        begin
+          NodeNew('MsgTxt').ValueAsString     := '业务执行成功';
+          NodeNew('MsgResult').ValueAsString  := sFlag_Yes;
+          NodeNew('MsgCommand').ValueAsString := IntToStr(FIn.FCommand);
+        end;
+      end;
+    end;
+  finally
+    nCardItem.Free;
     nCardData.Free;
   end;
   nData := FPacker.XMLBuilder.WriteToString;

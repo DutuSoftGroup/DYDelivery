@@ -118,6 +118,9 @@ type
     function GetOrderInfo(var nData:string):Boolean;
     //获取订单信息，用于网上下单
 
+    function GetOrderList(var nData:string):Boolean;
+    //获取订单信息，用于网上下单
+
     function getCustomerInfo(var nData:string):Boolean;
     //获取客户注册信息
     
@@ -466,6 +469,7 @@ begin
    cBC_WaitingForloading   : Result := GetWaitingForloading(nData); //待装车辆查询
    cBC_BillSurplusTonnage  : Result := GetBillSurplusTonnage(nData); //查询商城订单可用量
    cBC_GetOrderInfo        : Result := GetOrderInfo(nData); //查询云天系统订单信息
+   cBC_GetOrderList        : Result := GetOrderList(nData); //查询云天系统订单列表
    
    cBC_WeChat_getCustomerInfo : Result := getCustomerInfo(nData);   //微信平台接口：获取客户注册信息
    cBC_WeChat_get_Bindfunc    : Result := get_Bindfunc(nData);   //微信平台接口：客户与微信账号绑定
@@ -2039,6 +2043,130 @@ begin
   //------防伪校验end-------
 end;
 
+//获取订单列表，用于网上下单
+function TWorkerBusinessCommander.GetOrderList(var nData:string):Boolean;
+var
+  nCusId,nStr:string;
+  nWorker: PDBWorker;
+begin
+  Result := False;
+  nCusId := Trim(fin.FData);
+  if nCusId='' then Exit;
+  nStr := 'select XCB_ID,' +                      //内部编号
+        '  XCB_CardId,' +                       //销售卡片编号
+        '  XCB_Origin,' +                       //卡片来源
+        '  XCB_BillID,' +                       //来源单据号
+        '  XCB_SetDate,' +                      //办理日期
+        '  XCB_CardType,' +                     //卡片类型
+        '  XCB_SourceType,' +                   //来源类型
+        '  XCB_Option,' +                       //控制方式:0,控单价;1,控数量
+        '  XCB_Client,' +                       //客户编号
+        '  xob.XOB_Name as XCB_ClientName,' +   //客户名称
+        '  xgd.XOB_Name as XCB_WorkAddr,' +     //工程工地
+        '  XCB_Alias,' +                        //客户别名
+        '  XCB_OperMan,' +                      //业务员
+        '  XCB_Area,' +                         //销售区域
+        '  XCB_CementType as XCB_Cement,' +     //品种编号
+        '  PCM_Name as XCB_CementName,' +       //品种名称
+        '  XCB_LadeType,' +                     //提货方式
+        '  XCB_Number,' +                       //初始数量
+        '  XCB_FactNum,' +                      //已开数量
+        '  XCB_PreNum,' +                       //原已提量
+        '  XCB_ReturnNum,' +                    //退货数量
+        '  XCB_OutNum,' +                       //转出数量
+        '  XCB_RemainNum,' +                    //剩余数量
+        '  XCB_ValidS,XCB_ValidE,' +            //提货有效期
+        '  XCB_AuditState,' +                   //审核状态
+        '  XCB_Status,' +                       //卡片状态:0,停用;1,启用;2,冲红;3,作废
+        '  XCB_IsImputed,' +                    //卡片是否估算
+        '  XCB_IsOnly,' +                       //是否一车一票
+        '  XCB_Del,' +                          //删除标记:0,正常;1,删除
+        '  XCB_Creator,' +                      //创建人
+        '  pub.pub_name as XCB_CreatorNM,' +    //创建人名
+        '  XCB_CDate,' +                        //创建时间
+        '  XCB_Firm,' +                         //所属厂区
+        '  pbf.pbf_name as XCB_FirmName,' +     //工厂名称
+        '  pcb.pcb_id, pcb.pcb_name, ' +        //销售片区
+        '  xcg.xob_id as XCB_TransID, ' +       //运输单位编号
+        '  xcg.XOB_Name as XCB_TransName ' +    //运输单位
+        'from XS_Card_Base xcb' +
+        '  left join XS_Compy_Base xob on xob.XOB_ID = xcb.XCB_Client' +
+        '  left join XS_Compy_Base xgd on xgd.XOB_ID = xcb.xcb_sublader' +
+        '  left join PB_Code_Material pcm on pcm.PCM_ID = xcb.XCB_CementType' +
+        '  Left Join pb_code_block pcb On pcb.pcb_id=xob.xob_block' +
+        '  Left Join pb_basic_firm pbf On pbf.pbf_id=xcb.xcb_firm' +
+        '  Left Join PB_USER_BASE pub on pub.pub_id=xcb.xcb_creator ' +
+        '  Left Join XS_Card_Freight xcf on xcf.Xcf_Card=xcb.xcb_ID ' +
+        '  Left Join XS_Compy_Base xcg on xcg.xob_id=xcf.xcf_tran ' +
+        //可用数量大于0、卡片启用并且处于已审核状态
+        'where xcb.XCB_RemainNum>0.001 XCB_Status=''1'' and XCB_AuditState=''201'' and xcb.XCB_Client = ''%s''';
+  nStr := Format(nStr,[nCusId]);
+
+  nWorker := nil;
+
+  try
+    with gDBConnManager.SQLQuery(nStr, nWorker, sFlag_DB_YT) do
+    begin
+      if RecordCount < 1 then
+      begin
+        nData := Format('未查询到客户编号[ %s ]对应的订单信息.', [nCusId]);
+        Exit;
+      end;
+
+      FListA.Clear;
+      FListB.Clear;
+      First;
+
+      while not Eof do
+      begin
+        FListB.Values['XCB_ID']         := FieldByName('XCB_ID').AsString;
+        FListB.Values['XCB_CardId']     := FieldByName('XCB_CardId').AsString;
+        FListB.Values['XCB_Origin']     := FieldByName('XCB_Origin').AsString;
+        FListB.Values['XCB_BillID']     := FieldByName('XCB_BillID').AsString;
+        FListB.Values['XCB_SetDate']    := DateTime2Str(FieldByName('XCB_SetDate').AsDateTime);
+        FListB.Values['XCB_CardType']   := FieldByName('XCB_CardType').AsString;
+        FListB.Values['XCB_SourceType'] := FieldByName('XCB_SourceType').AsString;
+        FListB.Values['XCB_Option']     := FieldByName('XCB_Option').AsString;
+        FListB.Values['XCB_Client']     := FieldByName('XCB_Client').AsString;
+        FListB.Values['XCB_ClientName'] := FieldByName('XCB_ClientName').AsString;
+        FListB.Values['XCB_WorkAddr']   := FieldByName('XCB_WorkAddr').AsString;
+        FListB.Values['XCB_Alias']      := FieldByName('XCB_Alias').AsString;
+        FListB.Values['XCB_OperMan']    := FieldByName('XCB_OperMan').AsString;
+        FListB.Values['XCB_Area']       := FieldByName('XCB_Area').AsString;
+        FListB.Values['XCB_Cement']     := FieldByName('XCB_Cement').AsString;
+        FListB.Values['XCB_CementName'] := FieldByName('XCB_CementName').AsString;
+        FListB.Values['XCB_LadeType']   := FieldByName('XCB_LadeType').AsString;
+        FListB.Values['XCB_Number']     := FloatToStr(FieldByName('XCB_Number').AsFloat);
+        FListB.Values['XCB_FactNum']    := FloatToStr(FieldByName('XCB_FactNum').AsFloat);
+        FListB.Values['XCB_PreNum']     := FloatToStr(FieldByName('XCB_PreNum').AsFloat);
+        FListB.Values['XCB_ReturnNum']  := FloatToStr(FieldByName('XCB_ReturnNum').AsFloat);
+        FListB.Values['XCB_OutNum']     := FloatToStr(FieldByName('XCB_OutNum').AsFloat);
+        FListB.Values['XCB_RemainNum']  := FloatToStr(FieldByName('XCB_RemainNum').AsFloat);
+        FListB.Values['XCB_AuditState'] := FieldByName('XCB_AuditState').AsString;
+        FListB.Values['XCB_Status']     := FieldByName('XCB_Status').AsString;
+        FListB.Values['XCB_IsOnly']     := FieldByName('XCB_IsOnly').AsString;
+        FListB.Values['XCB_Del']        := FieldByName('XCB_Del').AsString;
+        FListB.Values['XCB_Creator']    := FieldByName('XCB_Creator').AsString;
+        FListB.Values['XCB_CreatorNM']  := FieldByName('XCB_CreatorNM').AsString;
+        FListB.Values['XCB_CDate']      := DateTime2Str(FieldByName('XCB_CDate').AsDateTime);
+        FListB.Values['XCB_Firm']       := FieldByName('XCB_Firm').AsString;
+        FListB.Values['XCB_FirmName']   := FieldByName('XCB_FirmName').AsString;
+        FListB.Values['pcb_id']         := FieldByName('pcb_id').AsString;
+        FListB.Values['pcb_name']       := FieldByName('pcb_name').AsString;
+        FListB.Values['XCB_TransID']    := FieldByName('XCB_TransID').AsString;
+        FListB.Values['XCB_TransName']  := FieldByName('XCB_TransName').AsString;
+
+        FListA.Add(PackerEncodeStr(FListB.Text));
+        Next;
+      end;
+
+      FOut.FData := PackerEncodeStr(FListA.Text);
+      Result := True;
+    end;
+  finally
+    gDBConnManager.ReleaseConnection(nWorker);
+  end;
+end;
 
 //获取客户注册信息
 function TWorkerBusinessCommander.getCustomerInfo(var nData:string):Boolean;
