@@ -527,6 +527,7 @@ begin
             nCardItem.Text := PackerDecodeStr(nCardData.Strings[i]);
             with NodeNew('Item') do
             begin
+              NodeNew('SetDate').ValueAsString := nCardItem.Values['XCB_SetDate'];
               NodeNew('BillNumber').ValueAsString := nCardItem.Values['XCB_CardId'];
               NodeNew('StockNo').ValueAsString := nCardItem.Values['XCB_Cement'];
               NodeNew('StockName').ValueAsString := nCardItem.Values['XCB_CementName'];

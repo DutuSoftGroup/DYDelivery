@@ -2099,7 +2099,7 @@ begin
         '  Left Join XS_Card_Freight xcf on xcf.Xcf_Card=xcb.xcb_ID ' +
         '  Left Join XS_Compy_Base xcg on xcg.xob_id=xcf.xcf_tran ' +
         //可用数量大于0、卡片启用并且处于已审核状态
-        'where xcb.XCB_RemainNum>0.001 XCB_Status=''1'' and XCB_AuditState=''201'' and xcb.XCB_Client = ''%s''';
+        'where xcb.XCB_RemainNum>0.001 and XCB_Status=''1'' and XCB_AuditState=''201'' and xcb.XCB_Client = ''%s''';
   nStr := Format(nStr,[nCusId]);
 
   nWorker := nil;
@@ -2123,7 +2123,7 @@ begin
         FListB.Values['XCB_CardId']     := FieldByName('XCB_CardId').AsString;
         FListB.Values['XCB_Origin']     := FieldByName('XCB_Origin').AsString;
         FListB.Values['XCB_BillID']     := FieldByName('XCB_BillID').AsString;
-        FListB.Values['XCB_SetDate']    := DateTime2Str(FieldByName('XCB_SetDate').AsDateTime);
+        FListB.Values['XCB_SetDate']    := Date2Str(FieldByName('XCB_SetDate').AsDateTime,True);
         FListB.Values['XCB_CardType']   := FieldByName('XCB_CardType').AsString;
         FListB.Values['XCB_SourceType'] := FieldByName('XCB_SourceType').AsString;
         FListB.Values['XCB_Option']     := FieldByName('XCB_Option').AsString;
