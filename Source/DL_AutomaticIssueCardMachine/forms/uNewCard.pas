@@ -15,6 +15,7 @@ type
   TWorkshop = record
     code:string;
     desc:string;
+    remainder:Integer;
     WarehouseList:TStringList;
   end;
   TfFormNewCard = class(TForm)
@@ -109,7 +110,7 @@ type
     FSzttceApi:TSzttceApi;
     FGetBatchCode:Boolean;
     FWorkshopList:TList;
-    FAutoClose:Integer;    
+    FAutoClose:Integer;
     function DownloadOrder(const nCard:string):Boolean;
     function CheckYunTianOrderInfo(const nOrderId:string;var nWebOrderItem:stMallOrderItem):Boolean;
     function SaveBillProxy:Boolean;
@@ -123,6 +124,7 @@ type
     function LoadValidZTLineGroup(const nStockno:string;const nList: TStrings):Boolean;
     function LoadWarehouseConfig:Boolean;
     function QueryCorrectBatchCode(const nCementDataText, nWebOrderValue: string;var nCementCodeID:string):string;
+    function QueryCorrectBatchCodeSimple(const nCementDataText, nWebOrderValue: string;var nCementCodeID:string):string;
     function GetOutASH(const nStr: string): string;
     //获取批次号条件
     function GetStockType(const nStockno:string):string;
@@ -700,7 +702,8 @@ begin
     BtnOK.Enabled := not nRepeat;
     Exit;
   end;
-  nCorrectBatchCode := QueryCorrectBatchCode(FCardData.Text,EditValue.Text,nCementCodeID);
+//  nCorrectBatchCode := QueryCorrectBatchCode(FCardData.Text,EditValue.Text,nCementCodeID);
+  nCorrectBatchCode := QueryCorrectBatchCodeSimple(FCardData.Text,EditValue.Text,nCementCodeID);
   if nCorrectBatchCode='' then
   begin
     FErrorCode := 1020;
@@ -853,6 +856,7 @@ begin
       New(nPWorkshopItem);
       nPWorkshopItem.code := UTF8Decode(nworkshopNode.ReadAttributeString('code'));
       nPWorkshopItem.desc := UTF8Decode(nworkshopNode.ReadAttributeString('desc'));
+      nPWorkshopItem.remainder := StrToIntDef(UTF8Decode(nworkshopNode.ReadAttributeString('remainder')),0);
       nPWorkshopItem.WarehouseList := TStringList.Create;
       nWarehouseCount := nworkshopNode.NodeCount;
       for j := 0 to nWarehouseCount-1 do
@@ -985,6 +989,101 @@ procedure TfFormNewCard.editWebOrderNoKeyDown(Sender: TObject;
   var Key: Word; Shift: TShiftState);
 begin
   FAutoClose := gSysParam.FAutoClose_Mintue;
+end;
+
+function TfFormNewCard.QueryCorrectBatchCodeSimple(const nCementDataText,
+  nWebOrderValue: string; var nCementCodeID: string): string;
+var
+  nAicmworkshop:string;
+  nSQL:string;
+  nStr:string;
+  nIdxEGI,nIdxBatchItem,i:Integer;
+  nEditGroupItems:TStrings;
+  nData:PStringsItemData;
+  nCementData,nListA, nListB: TStrings;
+  ndOrderValue,nBatchValue:Double;
+  nPostfix:Integer;
+  nPWorkshop:PWorkshop;
+begin
+  Result := '';
+  nAicmworkshop := '';
+  //begin查询自助办卡系统发货车间
+  nSQL := 'select * from %s where d_name=''%s'' and d_paramB=''%s''';
+  nSQL := Format(nSQL,[sTable_SysDict,sFlag_AICMWorkshop,FCardData.Values['XCB_Cement']]);
+  with FDM.QueryTemp(nSql) do
+  begin
+    if recordcount>0 then
+    begin
+      nAicmworkshop := FieldByName('d_desc').AsString;
+    end;
+  end;
+  if nAicmworkshop='' then
+  begin
+    ShowMsg('当前产品【'+nCementDataText+'】未设置发货车间。',sHint);
+    Exit;
+  end;
+  //end查询自助办卡系统发货车间
+
+  //begin获取xml文件配置信息
+  for i := 0 to FWorkshopList.Count-1 do
+  begin
+    nPWorkshop := PWorkshop(FWorkshopList.Items[i]);
+    if nPWorkshop.code=nAicmworkshop then Break;
+  end;
+  //end获取xml文件配置信息
+
+  //begin设置通道分组
+  nEditGroupItems := EditGroup.Properties.Items;
+  for nIdxEGI := 0 to nEditGroupItems.Count-1 do
+  begin
+    EditGroup.ItemIndex := nIdxEGI;
+    nData := PStringsItemData(nEditGroupItems.Objects[nIdxEGI]);
+    if nData.FString=nAicmworkshop then
+    begin
+      Break;
+    end;
+  end;
+  //end设置通道分组
+
+  nCementData := TStringList.Create;
+  nListA := TStringList.Create;
+  nListB := TStringList.Create;
+  try
+    //begin查询当前可用出厂编号
+    nStr := GetOutASH(EditGroup.Text);
+    FCardData.Values['XCB_OutASH'] := nStr;
+
+    //从云天系统获取当前车间的化验编号
+    nCementData.Text := YT_GetBatchCode(FCardData);
+    nListA.Text := PackerDecodeStr(nCementData.Values['XCB_CementRecords']);
+
+    for nIdxBatchItem := 0 to nListA.Count - 1 do
+    begin
+      nListB.Text := PackerDecodeStr(nListA[nIdxBatchItem]);
+      nBatchValue := StrToFloat(nListB.Values['XCB_CementValue']);
+
+      if nBatchValue-ndOrderValue>0.001 then
+      begin
+        Result := nListB.Values['XCB_CementCode'];
+        nCementCodeID := nListB.Values['XCB_CementCodeID'];
+        if Pos('#',Result)=0 then
+        begin
+          nStr := Copy(Result,Pos('＃',Result)+length('＃'),Length(Result));
+        end
+        else begin
+          nStr := Copy(Result,Pos('#',Result)+length('#'),Length(Result));
+        end;
+        nPostfix := StrToIntDef(nStr,0);
+        nPostfix := nPostfix mod 2;
+        if nPostfix=nPWorkshop.remainder then Break;
+      end;
+    end;
+    //end查询当前可用出厂编号
+  finally
+    nListA.Free;
+    nListB.Free;
+    nCementData.Free;
+  end;
 end;
 
 end.
