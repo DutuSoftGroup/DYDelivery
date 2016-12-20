@@ -87,7 +87,9 @@ const
   cFI_FrameWXSendLog    = $0111;                     //发送日志
   cFI_FrameYTBatchcode  = $0112;                     //云天批次编号记录 
   cFI_FrameZTLines      = $0113;                     //栈台信息
-  cFI_FrameWXBind       = $0115;                     //发送日志  
+  cFI_FrameWXBind       = $0115;                     //发送日志
+
+  cFI_FrameAICMWorkshop = $0116;                     //自助办卡系统-发货车间管理  
 
   cFI_FormMemo          = $1000;                     //备注窗口
   cFI_FormBackup        = $1001;                     //数据备份
@@ -172,7 +174,9 @@ const
 
   cFI_FormTransBase     = $1093;                     //短倒办理
 
-  cFI_FormWeixinBind    = $1095;                     //微信账号绑定  
+  cFI_FormWeixinBind    = $1095;                     //微信账号绑定
+
+  cFI_FormAICMWorkshop  = $1096;                     //自助办卡系统-发货车间管理  
   {*Command*}
   cCmd_RefreshData      = $0002;                     //刷新数据
   cCmd_ViewSysLog       = $0003;                     //系统日志
@@ -325,6 +329,7 @@ begin
   AddMenuModuleItem('MAIN_A04', cFI_FormRestore, mtForm);
   AddMenuModuleItem('MAIN_A05', cFI_FormChangePwd, mtForm);
   AddMenuModuleItem('MAIN_A07', cFI_FrameAuthorize);
+  AddMenuModuleItem('MAIN_A08', cFI_FrameAICMWorkshop);
 
   AddMenuModuleItem('MAIN_B01', cFI_FormBaseInfo, mtForm);
   AddMenuModuleItem('MAIN_B02', cFI_FrameCustomer);

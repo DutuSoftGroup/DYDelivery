@@ -49,7 +49,7 @@ type
     procedure btnWebMallClick(Sender: TObject);
   private
     { Private declarations }
-    function AddMallUser(const nPhone,nCus_id:string):Boolean;
+    function AddMallUser(const nPhone,nCus_id,nCus_name:string):Boolean;
     function DelMallUser(const nPhone,nCus_id:string):boolean;
   protected
     function InitFormDataSQL(const nWhere: string): string; override;
@@ -64,7 +64,7 @@ implementation
 {$R *.dfm}
 uses
   ULibFun, UMgrControl, UDataModule, UFormBase, UFormWait, USysBusiness,
-  USysConst, USysDB,UBusinessPacker,USysLoger;
+  USysConst, USysDB,UBusinessPacker,USysLoger,UFormInputbox;
 
 class function TfFrameCustomer.FrameID: integer;
 begin
@@ -280,10 +280,25 @@ begin
   nDs := FDM.QuerySQL(nSql);
   if nDs.RecordCount<=0 then
   begin
-    ShowMsg('该客户未设置手机号码，请在增加附加信息后再试！','手机号码未设置');
-    Exit;
+    if not ShowInputBox('请输入手机号码:', '开通商城账号', nMobileNo) then Exit;
+    if nMobileNo = '' then
+    begin
+      ShowMsg('该客户未设置手机号码！','手机号码未设置');
+      Exit;
+    end;
+    if Length(nMobileNo) <> 11 then
+    begin
+      ShowMsg('请输入正确的手机号码！','手机号码错误');
+      Exit;
+    end;
+    nSql := 'insert into %s(I_Group,I_ItemID,I_Info,I_Item) values(''%s'',''%s'',''%s'',''%s'')';
+    nSql := Format(nSql,[sTable_ExtInfo,sFlag_CustomerItem,nCus_ID,nMobileNo,'手机']);
+    FDM.ExecuteSQL(nSql);
+  end
+  else begin
+    nMobileNo := FDM.QueryTemp(nSQL).FieldByName('I_Info').AsString;
   end;
-  nMobileNo := FDM.QueryTemp(nSQL).FieldByName('I_Info').AsString;
+  
   {
   //暂不判断是否绑定微信号
   //判断录入的手机号码是否已成功绑定
@@ -302,7 +317,7 @@ begin
     Exit;
   end;
   }
-  if AddMallUser(nMobileNo,nCus_ID) then
+  if AddMallUser(nMobileNo,nCus_ID,nCusName) then
   begin
     //更新sys_WeixinCusBind表的状态
     nSql := 'update %s set wcb_WebMallStatus=''%s'' where wcb_Phone=''%s''';
@@ -321,7 +336,7 @@ begin
 end;
 
 function TfFrameCustomer.AddMallUser(const nPhone,
-  nCus_id: string): Boolean;
+  nCus_id,nCus_name: string): Boolean;
 var
   nXmlStr,nPass:string;
   nData:string;
@@ -344,11 +359,12 @@ begin
             +'	  <clientID>null</clientID>'
             +'	  <cash>0</cash>'
             +'	  <clientnumber>%s</clientnumber>'
+            +'	  <clientname>%s</clientname>'
             +'	</Item>'
             +'</Items>'
             +' <remark/>'
             +'</DATA>';
-  nXmlStr := Format(nXmlStr,[gSysParam.FFactory,nPhone,nPass,nCus_id]);
+  nXmlStr := Format(nXmlStr,[gSysParam.FFactory,nPhone,nPass,nCus_id,nCus_name]);
   nXmlStr := PackerEncodeStr(nXmlStr);
   nData := edit_shopclients(nXmlStr);
   gSysLoger.AddLog(TfFrameCustomer,'AddMallUser',nData);

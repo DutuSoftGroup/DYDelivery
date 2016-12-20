@@ -219,6 +219,7 @@ ResourceString
   sFlag_HardSrvURL    = 'HardMonURL';
   sFlag_MITSrvURL     = 'MITServiceURL';             //服务地址
   sFlag_Factoryid     = 'FactoryId';                 //工厂ID，与微信平台交互数据时使用
+  sFlag_AICMWorkshop  = 'aicmworkshop';              //自助办卡系统-发货车间管理
 
   sFlag_AutoIn        = 'Truck_AutoIn';              //自动进厂
   sFlag_AutoOut       = 'Truck_AutoOut';             //自动出厂
