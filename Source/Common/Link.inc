@@ -57,6 +57,7 @@
 {$IFDEF GZBDY}
   {$DEFINE GZBJM}
   {$DEFINE ADDRETURN}
+  {$DEFINE MultiReplay}
 {$ENDIF}
 
 //╦Пжч╟скивл

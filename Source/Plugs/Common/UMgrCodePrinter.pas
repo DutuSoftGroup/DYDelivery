@@ -26,6 +26,8 @@ type
     FEnable : Boolean;           //启用
     FOnline : Boolean;           //在线
     FLastOn : Int64;             //上次在线
+
+    FOptions: TStrings;          //附加选项
   end;
 
   TCodePrinterManager = class;
@@ -239,11 +241,18 @@ end;
 
 procedure TCodePrinterManager.ClearPrinters(const nFree: Boolean);
 var nIdx: Integer;
+    nPrinter: PCodePrinter;
 begin
   FSyncLock.Enter;
   try
     for nIdx:=FPrinters.Count - 1 downto 0 do
-      Dispose(PCodePrinter(FPrinters[nIdx]));
+    begin
+      nPrinter := FPrinters[nIdx];
+      if Assigned(nPrinter.FOptions) then
+        FreeAndNil(nPrinter.FOptions);
+
+      Dispose(nPrinter);
+    end;
     //xxxxx
 
     if nFree then
@@ -455,11 +464,12 @@ begin
     Exit;
   end;
 
-  if FTunnelCode.Values[nTunnel] = nCode then
+  if Length(nCode) < 1 then
   begin
     Result := True;
     Exit;
-  end; //通道喷码已发送
+  end;
+  //喷码信息为空
   
   Result := False;
   nPrinter := GetPrinter(nTunnel);
@@ -525,6 +535,12 @@ begin
           FTunnel := nNode.NodeByName('tunnel').ValueAsString;
           FDriver := nNode.NodeByName('driver').ValueAsString;
           FEnable := nNode.NodeByName('enable').ValueAsInteger = 1;
+
+          if Assigned(nNode.FindNode('options')) then
+          begin
+            FOptions := TStringList.Create;
+            SplitStr(nNode.FindNode('options').ValueAsString, FOptions, 0, ';');
+          end else FOptions := nil;
 
           FOnline := False;
           FLastOn := 0;
@@ -698,16 +714,22 @@ end;
 //Desc: 打印编码
 function TPrinterZero.PrintCode(const nCode: string;
   var nHint: string): Boolean;
-  var nData: string;
+var nData, nDatatemp, nStr, nPrtCode: string;
     nCrc: TByteWord;
     nBuf: TIdBytes;
-    nDatatemp: string;
-    nstr: string  ;
 begin
+  nPrtCode := nCode;
+  if Assigned(FPrinter.FOptions) then
+  begin
+    if IsNumber(FPrinter.FOptions.Values['pentou'], False) then
+      nPrtCode := '@' + FPrinter.FOptions.Values['pentou'] + nPrtCode;
+    //指定喷头  
+  end;
+
   //protocol: 55 7F len order datas crc16 AA
-  nData := Char($55) + Char($7F) + Char(Length(nCode) + 1);
+  nData := Char($55) + Char($7F) + Char(Length(nPrtCode) + 1);
   nData := nData + Char($54) + Char($01);
-  nData := nData + nCode;
+  nData := nData + nPrtCode;
 
   nCrc := TByteWord(CRC16(nData, 5, Length(nData)));
   nData := nData + Char(nCrc.FH) + Char(nCrc.FL) + Char($AA);
